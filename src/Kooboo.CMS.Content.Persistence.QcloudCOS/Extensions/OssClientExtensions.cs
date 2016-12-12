@@ -11,19 +11,19 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS
 {
     public static class OssClientExtensions
     {
-        public static ObjectListing ListBlobsWithPrefix(this OssClient client, string bucket, string prefix)
+        public static ObjectListing ListBlobsWithPrefix(this CosClient client, string bucket, string prefix)
         {
             return client.ListObjects(bucket, prefix);
         }
 
-        public static IEnumerable<OssObjectSummary> ListBlobsInFolder(this OssClient client, string bucket, string folder)
+        public static IEnumerable<OssObjectSummary> ListBlobsInFolder(this CosClient client, string bucket, string folder)
         {
             return client.ListBlobsWithPrefix(bucket, folder)
                 .ObjectSummaries
                 .Where(it => !it.Key.Substring(folder.Length).Contains("/"));
         }
 
-        public static byte[] GetObjectData(this OssClient client, string bucket, string key)
+        public static byte[] GetObjectData(this CosClient client, string bucket, string key)
         {
             if (!client.DoesObjectExist(bucket, key))
             {

@@ -34,6 +34,10 @@
       <HintPath>..\..\packages\Aliyun.OSS.SDK.2.3.0\lib\Aliyun.OSS.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Ionic.Zip, Version=1.9.1.8, Culture=neutral, PublicKeyToken=edbe51ad942a3f5c, processorArchitecture=MSIL">
+      <HintPath>..\packages\Unofficial.Ionic.Zip.1.9.1.8\lib\Ionic.Zip.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Ionic.Zip.Reduced">
       <HintPath>..\..\lib\Ionic.Zip.Reduced.dll</HintPath>
     </Reference>
@@ -144,6 +148,7 @@
     <Compile Include="TextContentFileProvider.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Ionic.Zip.xml" />
     <Content Include="Readme.txt" />
   </ItemGroup>
   <ItemGroup>

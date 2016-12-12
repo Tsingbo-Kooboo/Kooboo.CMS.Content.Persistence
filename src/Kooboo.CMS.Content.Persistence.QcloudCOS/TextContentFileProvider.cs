@@ -19,7 +19,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS
     public class TextContentFileProvider : ITextContentFileProvider
     {
         private readonly string bucket;
-        private readonly OssClient ossClient;
+        private readonly CosClient ossClient;
         public TextContentFileProvider()
         {
             var account = OssAccountHelper.GetOssClientBucket(Repository.Current);

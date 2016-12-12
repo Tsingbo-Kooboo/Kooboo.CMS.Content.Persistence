@@ -22,7 +22,6 @@ using Kooboo.Web.Url;
 using Kooboo.CMS.Content.Caching;
 using Kooboo.CMS.Caching;
 using Kooboo.IO;
-using Aliyun.OSS;
 
 namespace Kooboo.CMS.Content.Persistence.QcloudCOS
 {
@@ -31,7 +30,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS
     public class MediaFolderProvider : IMediaFolderProvider
     {
         private readonly string bucket;
-        private readonly OssClient ossClient;
+        private readonly CosClient ossClient;
         public MediaFolderProvider()
         {
             var account = OssAccountHelper.GetOssClientBucket(Repository.Current);
@@ -159,7 +158,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS
             zipFile.Save(outputStream);
         }
 
-        private void zipFolder(OssClient ossClient, string basePrefix, string folderName, string zipDir, ref ZipFile zipFile)
+        private void zipFolder(CosClient ossClient, string basePrefix, string folderName, string zipDir, ref ZipFile zipFile)
         {
             zipDir = string.IsNullOrEmpty(zipDir) ? folderName : zipDir + "/" + folderName;
             zipFile.AddDirectoryByName(zipDir);
@@ -198,7 +197,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS
             }
         }
 
-        private void MoveDirectory(OssClient ossClient, string bucket, string newPrefix, string oldPrefix)
+        private void MoveDirectory(CosClient ossClient, string bucket, string newPrefix, string oldPrefix)
         {
             var blobs = ossClient.ListBlobsWithPrefix(bucket, oldPrefix);
             foreach (var blob in blobs.ObjectSummaries)

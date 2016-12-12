@@ -15,7 +15,7 @@ using Kooboo.CMS.Content.Query.Expressions;
 using Kooboo.CMS.Content.Query;
 using System.IO;
 using Kooboo.CMS.Content.Query.Translator;
-
+using Kooboo.CMS.Common.Runtime.Dependency;
 namespace Kooboo.CMS.Content.Persistence.QcloudCOS
 {
     #region Translator
@@ -27,7 +27,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS
         string fileName = null;
         string prefix = null;
 
-        public IEnumerable<MediaContent> Translate(IExpression expression, OssClient ossClient, MediaFolder mediaFolder)
+        public IEnumerable<MediaContent> Translate(IExpression expression, CosClient ossClient, MediaFolder mediaFolder)
         {
             var account = OssAccountHelper.GetOssClientBucket(mediaFolder.Repository);
             this.Visite(expression);
@@ -257,11 +257,11 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS
         #endregion
     }
     #endregion
-    [Kooboo.CMS.Common.Runtime.Dependency.Dependency(typeof(IMediaContentProvider), Order = 2)]
-    [Kooboo.CMS.Common.Runtime.Dependency.Dependency(typeof(IContentProvider<MediaContent>), Order = 2)]
+    [Dependency(typeof(IMediaContentProvider), Order = 2)]
+    [Dependency(typeof(IContentProvider<MediaContent>), Order = 2)]
     public class MediaContentProvider : IMediaContentProvider
     {
-        private readonly OssClient ossClient;
+        private readonly CosClient ossClient;
         private readonly string bucket;
 
         public MediaContentProvider()

@@ -17,16 +17,16 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS
     internal static class OssAccountHelper
     {
         /// <summary>
-        /// item1: OssClient
+        /// item1: CosClient
         /// item2: BucketName
         /// item3: Domain
         /// </summary>
         /// <param name="repository"></param>
         /// <returns></returns>
-        public static Tuple<CosCloud, string, string> GetOssClientBucket(Repository repository)
+        public static Tuple<CosClient, string, string> GetOssClientBucket(Repository repository)
         {
             var account = QcloudCOSAccountSettings.Instance;
-            var client = new CosCloud(account.AppId, account.AccessKeyId, account.AccessKeySecret);
+            var client = new CosClient(account.AppId, account.AccessKeyId, account.AccessKeySecret);
             string bucket = account.BucketName;
             string domain = account.CustomDomain;
             if (repository != null)
@@ -35,7 +35,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS
                     .FirstOrDefault(it => it.RepositoryName.Equals(repository.Name, StringComparison.OrdinalIgnoreCase));
                 if (config != null)
                 {
-                    client = new CosCloud(config.AppId, account.AccessKeyId, account.AccessKeySecret);
+                    client = new CosClient(config.AppId, account.AccessKeyId, account.AccessKeySecret);
                     bucket = config.BucketName;
                     if (!string.IsNullOrEmpty(config.CustomDomain))
                     {
@@ -44,7 +44,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS
                 }
             }
             bucket = StorageNamesEncoder.EncodeContainerName(bucket);
-            return new Tuple<CosCloud, string, string>(client, bucket, domain);
+            return new Tuple<CosClient, string, string>(client, bucket, domain);
         }
 
         public static string GetUrl(Repository repository, OssObject blob)

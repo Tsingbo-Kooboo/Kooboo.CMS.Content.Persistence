@@ -170,7 +170,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS
             return mediaContent;
         }
 
-        //public static MediaContent BlobToMediaContent(this OssObject blob, MediaContent mediaContent, OssClient client)
+        //public static MediaContent BlobToMediaContent(this OssObject blob, MediaContent mediaContent, CosClient client)
         //{
         //    mediaContent.Published = blob.Metadata.UserMetadata.GetBool("Published");
         //    mediaContent.Size = blob.Metadata.UserMetadata.GetInt("Size");
