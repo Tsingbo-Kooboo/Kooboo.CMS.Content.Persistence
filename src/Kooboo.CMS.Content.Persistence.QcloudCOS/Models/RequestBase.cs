@@ -27,38 +27,26 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Models
         public Dictionary<string, string> headers { get; set; } =
             new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
-                {"Host", "web.file.myqcloud.com"},
-                {"Content-Type", "application/json"}
+                //{"Host", "web.file.myqcloud.com"},
+                //{"Content-Type", "application/json"}
             };
 
-        private string _contentType;
-
-        public string contentType
-        {
-            get
-            {
-                if (string.IsNullOrEmpty(_contentType))
-                {
-                    return IOUtility.MimeType(remotePath);
-                }
-                return _contentType;
-            }
-            set
-            {
-                _contentType = value;
-            }
-        }
+        public string contentType { get; set; } = "application/json";
 
         public int offset { get; set; } = -1;
 
-        public long ExpiredTime { get; set; }
-
-        public void Sign()
+        public void Sign(CosAccount account)
         {
-            var accountService = EngineContext.Current.Resolve<ICosAccountService>();
-            var account = accountService.Get(repository);
             var auth = SignUtility.Signature(account.AppId, account.AccessKeyId, account.AccessKeySecret, account.ExpiredTime, account.BucketName);
             headers["Authorization"] = auth;
         }
+
+        public void SignOnce(CosAccount account)
+        {
+            var path = "/" + remotePath.TrimStart('/');
+            var auth = SignUtility.SignatureOnce(account.AppId, account.AccessKeyId, account.AccessKeySecret, path, account.BucketName);
+            headers["Authorization"] = auth;
+        }
+
     }
 }

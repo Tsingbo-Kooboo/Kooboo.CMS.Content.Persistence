@@ -1,7 +1,6 @@
 ﻿using Kooboo.CMS.Common.Runtime.Dependency;
 using Kooboo.CMS.Content.Persistence.QcloudCOS.Models;
 using Kooboo.CMS.Content.Persistence.QcloudCOS.Utilities;
-using Kooboo.Web.Script.Serialization;
 using Kooboo.Web.Url;
 using System;
 using System.Collections.Generic;
@@ -11,7 +10,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
-using Kooboo.CMS.Content.Persistence.QcloudCOS.Extensions;
+using Kooboo.Web.Script.Serialization;
 
 namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
 {
@@ -71,8 +70,8 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
                 httpRequest.KeepAlive = true;
                 httpRequest.UserAgent = CosDefaultValue.USER_AGENT_VERSION;
                 httpRequest.Timeout = 60 * 1000;
-                httpRequest.ContentType = context.contentType;
-                context.Sign();
+                httpRequest.ContentType = "application/json";
+                httpRequest.Host = "web.file.myqcloud.com";
                 foreach (var item in context.headers)
                 {
                     httpRequest.Headers.Add(item.Key, item.Value);
@@ -92,7 +91,8 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
                     using (var s = we.Response.GetResponseStream())
                     {
                         var reader = new StreamReader(s, Encoding.UTF8);
-                        return JsonHelper.Deserialize<T>(reader.ReadToEnd());
+                        var jsonString = reader.ReadToEnd();
+                        return JsonHelper.Deserialize<T>(jsonString);
                     }
                 }
                 throw we;
@@ -124,7 +124,8 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
                 httpRequest.UserAgent = CosDefaultValue.USER_AGENT_VERSION;
                 httpRequest.Timeout = 60 * 1000;
                 httpRequest.Method = "POST";
-                context.Sign();
+                httpRequest.Host = "web.file.myqcloud.com";
+
                 foreach (var item in context.headers)
                 {
                     httpRequest.Headers.Add(item.Key, item.Value);
@@ -210,7 +211,8 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
                 using (var s = response.GetResponseStream())
                 {
                     var reader = new StreamReader(s, Encoding.UTF8);
-                    return JsonHelper.Deserialize<T>(reader.ReadToEnd());
+                    var jsonString = reader.ReadToEnd();
+                    return JsonHelper.Deserialize<T>(jsonString);
                 }
             }
             catch (WebException we)
@@ -220,7 +222,8 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
                     using (var s = we.Response.GetResponseStream())
                     {
                         var reader = new StreamReader(s, Encoding.UTF8);
-                        return JsonHelper.Deserialize<T>(reader.ReadToEnd());
+                        var jsonString = reader.ReadToEnd();
+                        return JsonHelper.Deserialize<T>(jsonString);
                     }
                 }
                 else

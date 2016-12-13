@@ -6,12 +6,9 @@ using System.Threading.Tasks;
 
 namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Models
 {
-    public class DeleteRequest : RequestBase
+    public class ConstValues
     {
-        public override string op { get; } = "delete";
-    }
-
-    public class DeleteFolder : EmptyResponse
-    {
+        public const string Authorization = "Authorization";
+        public const string ContentType = "Content-Type";
     }
 }

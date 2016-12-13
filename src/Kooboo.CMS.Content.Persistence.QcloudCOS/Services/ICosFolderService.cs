@@ -12,7 +12,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
     {
         CreateFolder Create(CreateFolderRequest request);
 
-        DeleteFolder Delete(DeleteFolderRequest request);
+        DeleteFolder Delete(DeleteRequest request);
 
         ListFolder List(ListFolderRequest request);
     }
@@ -25,7 +25,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
             throw new NotImplementedException();
         }
 
-        public DeleteFolder Delete(DeleteFolderRequest request)
+        public DeleteFolder Delete(DeleteRequest request)
         {
             throw new NotImplementedException();
         }

@@ -21,7 +21,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Models
 
     public class ListFileData : ListCosObjectData
     {
-        public CosFileData infos { get; set; } = new CosFileData();
+        public IEnumerable<CosFileData> infos { get; set; } = Enumerable.Empty<CosFileData>();
     }
 
     public class CosFileData : CosFolderData

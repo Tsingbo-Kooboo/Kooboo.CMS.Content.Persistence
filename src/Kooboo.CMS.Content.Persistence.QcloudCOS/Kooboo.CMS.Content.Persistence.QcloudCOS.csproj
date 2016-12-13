@@ -86,6 +86,10 @@
       <HintPath>..\packages\Microsoft.Web.Infrastructure.1.0.0.0\lib\net40\Microsoft.Web.Infrastructure.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Newtonsoft.Json, Version=8.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.8.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
@@ -127,9 +131,11 @@
     <Compile Include="Extensions\DateTimeExtensions.cs" />
     <Compile Include="Extensions\DictionaryExtensions.cs" />
     <Compile Include="Extensions\ObjectExtensions.cs" />
+    <Compile Include="Models\ConstValues.cs" />
     <Compile Include="Models\CosAccount.cs" />
     <Compile Include="Models\CosDefaultValue.cs" />
     <Compile Include="Models\CreateFile.cs" />
+    <Compile Include="Models\DeleteFile.cs" />
     <Compile Include="Models\DeleteFolder.cs" />
     <Compile Include="Models\FileDetail.cs" />
     <Compile Include="Models\ListCosObject.cs" />
@@ -150,6 +156,8 @@
     <Compile Include="Services\ICosFolderService.cs" />
     <Compile Include="Services\IRequest.cs" />
     <Compile Include="Utilities\CosHttpUtility.cs" />
+    <Compile Include="Utilities\MediaPathUtility.cs" />
+    <Compile Include="Utilities\SHA1Utility.cs" />
     <Compile Include="Utilities\SignUtility.cs" />
   </ItemGroup>
   <ItemGroup>

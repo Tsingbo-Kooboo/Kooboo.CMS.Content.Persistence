@@ -2,91 +2,116 @@
 using Kooboo.CMS.Content.Persistence.QcloudCOS.Models;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Kooboo.CMS.Content.Models;
+using Kooboo.CMS.Content.Persistence.QcloudCOS.Utilities;
+using Kooboo.IO;
+using Kooboo.Web.Script.Serialization;
 
 namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
 {
     public interface ICosFileService
     {
-        CreateFile Create(CreateFileRequest request);
+        CreateFile Create(string path, string repository, Stream stream);
 
-        FileDetail Get(FileDetailRequest request);
+        FileDetail Get(string path, string repository);
 
-        ListFile List(ListFileRequest request);
+        ListFile List(string path, string repository);
 
         MoveFile Move(MoveFileRequest request);
 
-        UpdateFile Update(UpdateFileRequest request);
+        DeleteFile Delete(string path, string repository);
+
+        UpdateFile Update(string path, string repository, Dictionary<string, string> headers);
     }
 
     [Dependency(typeof(ICosFileService))]
     public class CosFileService : ICosFileService
     {
         private readonly IRequest _request;
-        public CosFileService(IRequest request)
+        private readonly ICosAccountService _accountService;
+        public CosFileService(IRequest request, ICosAccountService accountService)
         {
             _request = request;
+            _accountService = accountService;
         }
 
-        public FileDetail Get(FileDetailRequest request)
+        public FileDetail Get(string path, string repository)
         {
-            var x = _request.Get<FileDetail, FileDetailRequest, FileDetailData>(request, new RequestContext { });
-            throw new NotImplementedException();
+            var request = new FileDetailRequest();
+            var context = new RequestContext
+            {
+                remotePath = MediaPathUtility.FilePath(path, repository),
+                repository = repository
+            };
+            var account = _accountService.Get(repository);
+            context.Sign(account);
+            return _request.Get<FileDetail, FileDetailRequest, FileDetailData>(request, context);
         }
 
-        public ListFile List(ListFileRequest request)
+        public ListFile List(string path, string repository)
         {
-            throw new NotImplementedException();
+            var request = new ListFileRequest();
+            var context = new RequestContext
+            {
+                remotePath = MediaPathUtility.FolderPath(path, repository),
+                repository = repository
+            };
+            var account = _accountService.Get(repository);
+            context.Sign(account);
+            return _request.Get<ListFile, ListFileRequest, ListFileData>(request, context);
         }
 
         public MoveFile Move(MoveFileRequest request)
         {
             throw new NotImplementedException();
         }
-        /*
-        public string UpdateFile(string bucketName, string remotePath, Dictionary<string, string> parameterDic = null)
+
+        public DeleteFile Delete(string path, string repository)
         {
-            var url = generateURL(bucketName, remotePath);
-            var data = new Dictionary<string, object>();
-            var customerHeaders = new Dictionary<string, object>();
-
-            data.Add("op", "update");
-
-            //接口中的flag统一cgi设置
-
-            //将forbid设置到data中，这个不用设置flag
-            addParameter(CosParameters.PARA_FORBID, ref data, ref parameterDic);
-
-            //将biz_attr设置到data中
-            addParameter(CosParameters.PARA_BIZ_ATTR, ref data, ref parameterDic);
-
-            //将authority设置到data中
-            addAuthority(ref data, ref parameterDic);
-
-            //将customer_headers设置到data["custom_headers"]中
-            if (parameterDic != null && setCustomerHeaders(ref customerHeaders, ref parameterDic))
+            var request = new DeleteRequest();
+            var context = new RequestContext
             {
-                data.Add(CosParameters.PARA_CUSTOM_HEADERS, customerHeaders);
-            }
-
-            var sign = Sign.SignatureOnce(appId, secretId, secretKey, (remotePath.StartsWith("/") ? "" : "/") + remotePath, bucketName);
-            var header = new Dictionary<string, string>();
-            header.Add(CosParameters.Authorization, sign);
-            header.Add(CosParameters.PARA_CONTENT_TYPE, "application/json");
-            return httpRequest.SendRequest(url, ref data, HttpMethod.Post, ref header, timeOut);
+                remotePath = MediaPathUtility.FilePath(path, repository),
+                repository = repository
+            };
+            var account = _accountService.Get(repository);
+            context.SignOnce(account);
+            return _request.Post<DeleteFile, DeleteRequest, string>(request, context);
         }
-        */
-        public UpdateFile Update(UpdateFileRequest request)
-        {
 
+        public UpdateFile Update(string path, string repository, Dictionary<string, string> headers)
+        {
+            var request = new UpdateFileRequest
+            {
+                custom_headers = headers
+            };
             throw new NotImplementedException();
         }
 
-        public CreateFile Create(CreateFileRequest request)
+        public CreateFile Create(string path, string repository, Stream stream)
         {
-            throw new NotImplementedException();
+            var context = new RequestContext
+            {
+                remotePath = MediaPathUtility.FilePath(path, repository),
+                repository = repository
+            };
+            var customHeaders = new Dictionary<string, string>
+            {
+                [ConstValues.ContentType] = IOUtility.MimeType(context.remotePath)
+            };
+            var request = new CreateFileRequest
+            {
+                biz_attr = customHeaders.ToJSON(),
+                filecontent = stream.ReadData(),
+                sha = SHA1Utility.GetFileSHA1(stream)
+            };
+            var account = _accountService.Get(repository);
+            context.Sign(account);
+            return _request.Post<CreateFile, CreateFileRequest, CreateFileData>(request, context);
         }
     }
 }

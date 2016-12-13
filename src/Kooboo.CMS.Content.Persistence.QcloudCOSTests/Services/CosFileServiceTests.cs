@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Kooboo.CMS.Content.Persistence.QcloudCOS.Models;
 using Kooboo.CMS.Common.Runtime;
+using Kooboo.CMS.Content.Persistence.QcloudCOSTests;
 
 namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services.Tests
 {
@@ -34,12 +35,33 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services.Tests
         [TestMethod()]
         public void GetTest()
         {
-            //http://cdn-10046248.cos.myqcloud.com/sago.jpg
-            context.remotePath = "sago.jpg";
-            context.repository = "";
-            var response = request.Get<FileDetail, FileDetailRequest, FileDetailData>(new FileDetailRequest(), context);
+            //http://cdn-10046248.cos.myqcloud.com/SampleSite/Media/home/sago.jpg
+            var response = cosFileService.Get("home/sago.jpg", "SampleSite");
             Assert.AreEqual(0, response.code);
+        }
 
+        [TestMethod()]
+        public void ListTest()
+        {
+            var response = cosFileService.List("home", "SampleSite");
+            Assert.AreEqual(0, response.code);
+        }
+
+        [TestMethod()]
+        public void DeleteTest()
+        {
+            var response = cosFileService.Delete("home/sago.jpg", "SampleSite");
+            Assert.AreEqual(0, response.code);
+        }
+
+        [TestMethod()]
+        public void CreateTest()
+        {
+            using (var stream = TestHelper.GetStream("98.jpg"))
+            {
+                var response = cosFileService.Create("home/98.jpg", "SampleSite", stream);
+
+            }
         }
     }
 }
