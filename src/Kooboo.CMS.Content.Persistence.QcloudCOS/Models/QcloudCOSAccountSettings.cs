@@ -61,7 +61,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS
         }
         private static string GetSettingFile()
         {
-            return Path.Combine(Settings.BinDirectory, "AliyunOSSSettings.json");
+            return Path.Combine(Settings.BinDirectory, "QcloudCOSSettings.json");
         }
         public static QcloudCOSAccountSettings Instance
         {
