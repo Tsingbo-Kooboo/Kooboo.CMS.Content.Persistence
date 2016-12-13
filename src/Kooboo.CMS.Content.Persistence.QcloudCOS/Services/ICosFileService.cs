@@ -24,8 +24,15 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
     [Dependency(typeof(ICosFileService))]
     public class CosFileService : ICosFileService
     {
+        private readonly IRequest _request;
+        public CosFileService(IRequest request)
+        {
+            _request = request;
+        }
+
         public FileDetail Get(FileDetailRequest request)
         {
+            var x = _request.Get<FileDetail, FileDetailRequest, FileDetailData>(request, new RequestContext { });
             throw new NotImplementedException();
         }
 

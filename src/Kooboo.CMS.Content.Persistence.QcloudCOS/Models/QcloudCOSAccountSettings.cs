@@ -84,27 +84,11 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS
         [DataMember]
         public string BucketName { get; set; }
 
-        private string domain;
         /// <summary>
         /// 自定义域名
         /// </summary>
         [DataMember]
-        public string CustomDomain
-        {
-            get
-            {
-                if (string.IsNullOrEmpty(domain))
-                {
-                    var uri = new Uri(AppId);
-                    return $"{uri.Scheme}://{BucketName}.{uri.Host}";
-                }
-                return domain;
-            }
-            set
-            {
-                domain = value;
-            }
-        }
+        public string CustomDomain { get; set; }
 
         /// <summary>
         /// RepositoryName~BucketName

@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kooboo.CMS.Content.Persiste
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kooboo.CMS.Content.Persistence.QcloudCOS", "Kooboo.CMS.Content.Persistence.QcloudCOS\Kooboo.CMS.Content.Persistence.QcloudCOS.csproj", "{6D5D4D03-124F-4121-96E3-EF540B0A4602}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kooboo.CMS.Content.Persistence.QcloudCOSTests", "Kooboo.CMS.Content.Persistence.QcloudCOSTests\Kooboo.CMS.Content.Persistence.QcloudCOSTests.csproj", "{50B13327-B703-4ABF-A807-889D63474D6B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{6D5D4D03-124F-4121-96E3-EF540B0A4602}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6D5D4D03-124F-4121-96E3-EF540B0A4602}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6D5D4D03-124F-4121-96E3-EF540B0A4602}.Release|Any CPU.Build.0 = Release|Any CPU
+		{50B13327-B703-4ABF-A807-889D63474D6B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{50B13327-B703-4ABF-A807-889D63474D6B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{50B13327-B703-4ABF-A807-889D63474D6B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{50B13327-B703-4ABF-A807-889D63474D6B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

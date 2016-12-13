@@ -1,9 +1,8 @@
 ﻿using Kooboo.CMS.Common.Runtime.Dependency;
 using Kooboo.CMS.Content.Persistence.QcloudCOS.Models;
+using Kooboo.CMS.Content.Persistence.QcloudCOS.Utilities;
 using Kooboo.Web.Script.Serialization;
 using Kooboo.Web.Url;
-using QCloud.CosApi.Common;
-using QCloud.CosApi.Util;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,14 +11,22 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
+using Kooboo.CMS.Content.Persistence.QcloudCOS.Extensions;
 
 namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
 {
     public interface IRequest
     {
-        T Get<T, R>(RequestBase request, RequestContext context) where T : ResponseBase<R> where R : class;
+        T Get<T, TR, TC>(TR request, RequestContext context)
+            where T : ResponseBase<TC>
+            where TR : RequestBase
+            where TC : class;
 
-        T Post<T, R>(RequestBase request, RequestContext context) where T : ResponseBase<R> where R : class;
+
+        T Post<T, TR, TC>(TR request, RequestContext context)
+            where T : ResponseBase<TC>
+            where TR : RequestBase
+            where TC : class;
 
     }
 
@@ -32,7 +39,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
             _accountService = accountService;
         }
 
-        const string COSAPI_CGI_URL = "http://sh.file.myqcloud.com/files/v2/";
+        const string COSAPI_CGI_URL = "http://web.file.myqcloud.com/files/v1/";
         private string generateURL(RequestContext context)
         {
             var account = _accountService.Get(context.repository);
@@ -40,12 +47,13 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
                 COSAPI_CGI_URL,
                 account.AppId.ToString(),
                 account.BucketName,
-                HttpUtils.EncodeRemotePath(context.remotePath));
+                CosHttpUtility.EncodeRemotePath(context.remotePath));
         }
 
-        public T Get<T, R>(RequestBase request, RequestContext context)
-            where T : ResponseBase<R>
-            where R : class
+        public T Get<T, TR, TC>(TR request, RequestContext context)
+           where T : ResponseBase<TC>
+           where TR : RequestBase
+           where TC : class
         {
             try
             {
@@ -64,6 +72,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
                 httpRequest.UserAgent = CosDefaultValue.USER_AGENT_VERSION;
                 httpRequest.Timeout = 60 * 1000;
                 httpRequest.ContentType = context.contentType;
+                context.Sign();
                 foreach (var item in context.headers)
                 {
                     httpRequest.Headers.Add(item.Key, item.Value);
@@ -72,7 +81,8 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
                 using (var s = response.GetResponseStream())
                 {
                     var reader = new StreamReader(s, Encoding.UTF8);
-                    return JsonHelper.Deserialize<T>(reader.ReadToEnd());
+                    var jsonString = reader.ReadToEnd();
+                    return JsonHelper.Deserialize<T>(jsonString);
                 }
             }
             catch (WebException we)
@@ -85,10 +95,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
                         return JsonHelper.Deserialize<T>(reader.ReadToEnd());
                     }
                 }
-                else
-                {
-                    throw we;
-                }
+                throw we;
             }
             catch (Exception e)
             {
@@ -97,9 +104,10 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
             }
         }
 
-        public T Post<T, R>(RequestBase request, RequestContext context)
-            where T : ResponseBase<R>
-            where R : class
+        public T Post<T, R, C>(R request, RequestContext context)
+          where T : ResponseBase<C>
+          where R : RequestBase
+          where C : class
         {
             try
             {
@@ -116,6 +124,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
                 httpRequest.UserAgent = CosDefaultValue.USER_AGENT_VERSION;
                 httpRequest.Timeout = 60 * 1000;
                 httpRequest.Method = "POST";
+                context.Sign();
                 foreach (var item in context.headers)
                 {
                     httpRequest.Headers.Add(item.Key, item.Value);
@@ -128,8 +137,8 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
                     {
                         dict[item.Name] = item.GetValue(request)?.ToString();
                     }
-                    var json = JsonHelper.ToJSON(dict);
-                    var jsonByte = Encoding.GetEncoding("utf-8").GetBytes(json.ToString());
+                    var json = dict.ToJSON();
+                    var jsonByte = Encoding.GetEncoding("utf-8").GetBytes(json);
                     memStream.Write(jsonByte, 0, jsonByte.Length);
                 }
                 else
@@ -175,7 +184,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
                                 }
                                 else
                                 {
-                                    var buffer = new byte[SLICE_SIZE.SLIZE_SIZE_1M];
+                                    var buffer = new byte[1 * 1024 * 1024];
                                     int bytesRead;
                                     fileStream.Seek(context.offset, SeekOrigin.Begin);
                                     bytesRead = fileStream.Read(buffer, 0, buffer.Length);
