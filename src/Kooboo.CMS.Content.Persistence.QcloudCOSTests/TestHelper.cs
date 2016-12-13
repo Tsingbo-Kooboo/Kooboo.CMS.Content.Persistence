@@ -11,7 +11,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOSTests
     {
         public static Stream GetStream(string name)
         {
-            var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, name);
+            var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", name);
             return new FileStream(path, FileMode.Open);
         }
     }
