@@ -10,14 +10,14 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Utilities
 {
     public static class SHA1Utility
     {
-        public static string GetFileSHA1(Stream oFileStream)
+        public static string GetFileSHA1(Stream stream)
         {
             var strResult = "";
             var osha1 = new SHA1CryptoServiceProvider();
             try
             {
-                var arrbytHashValue = osha1.ComputeHash(oFileStream);
-                oFileStream.Close();
+                stream.Position = 0;
+                var arrbytHashValue = osha1.ComputeHash(stream);
                 //由以连字符分隔的十六进制对构成的String，其中每一对表示value 中对应的元素；例如“F-2C-4A”
                 var strHashData = BitConverter.ToString(arrbytHashValue);
                 //替换-

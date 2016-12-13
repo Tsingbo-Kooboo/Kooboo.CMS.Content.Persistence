@@ -22,7 +22,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Models
         /// 1 不覆盖（若已存在重名文件，则不做覆盖，返回“上传失败”）。
         /// 默认为 1 不覆盖。
         /// </summary>
-        public InsertOnlyOption insertOnly { get; set; }
+        public int insertOnly { get; set; }
     }
 
     public class CreateFile : ResponseBase<CreateFileData>

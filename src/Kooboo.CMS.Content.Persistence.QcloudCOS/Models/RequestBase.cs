@@ -31,21 +31,21 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Models
                 //{"Content-Type", "application/json"}
             };
 
-        public string contentType { get; set; } = "application/json";
+        public string contentType { get; set; } = ConstValues.ApplicationJson;
 
         public int offset { get; set; } = -1;
 
         public void Sign(CosAccount account)
         {
             var auth = SignUtility.Signature(account.AppId, account.AccessKeyId, account.AccessKeySecret, account.ExpiredTime, account.BucketName);
-            headers["Authorization"] = auth;
+            headers[ConstValues.Authorization] = auth;
         }
 
         public void SignOnce(CosAccount account)
         {
             var path = "/" + remotePath.TrimStart('/');
             var auth = SignUtility.SignatureOnce(account.AppId, account.AccessKeyId, account.AccessKeySecret, path, account.BucketName);
-            headers["Authorization"] = auth;
+            headers[ConstValues.Authorization] = auth;
         }
 
     }

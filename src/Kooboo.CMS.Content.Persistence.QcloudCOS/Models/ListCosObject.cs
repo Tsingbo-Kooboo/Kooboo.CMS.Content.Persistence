@@ -23,7 +23,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Models
         /// <summary>
         /// 0 正序（默认）；1 反序
         /// </summary>
-        public OrderDirection order { get; set; }
+        public int order { get; set; }
         /// <summary>
         /// 透传字段，从响应的返回内容中得到。
         /// 若查看第一页，则将空字符串作为 context 传入。

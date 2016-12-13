@@ -14,54 +14,52 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services.Tests
     [TestClass()]
     public class CosFileServiceTests
     {
-        private IRequest request;
-        private RequestContext context;
+        private readonly IRequest request;
+        private readonly ICosFileService cosFileService;
 
-        private ICosFileService cosFileService;
+        public CosFileServiceTests()
+        {
+            cosFileService = EngineContext.Current.Resolve<ICosFileService>();
+            request = EngineContext.Current.Resolve<IRequest>();
+        }
 
         [TestInitialize]
         public void Init()
         {
-            var accountService = new CosAccountService();
-            request = new DefaultRequest(accountService);
-            context = new RequestContext
-            {
-                repository = "test"
-            };
-
-            cosFileService = EngineContext.Current.Resolve<ICosFileService>();
         }
 
+        const string RepositoryName = "SampleSite";
         [TestMethod()]
-        public void GetTest()
+        public void CRUDTest()
         {
-            //http://cdn-10046248.cos.myqcloud.com/SampleSite/Media/home/sago.jpg
-            var response = cosFileService.Get("home/sago.jpg", "SampleSite");
-            Assert.AreEqual(0, response.code);
-        }
+            var remotePath = $"home/{DateTime.Now.ToString("yyyy-MM-dd-hh-mm-ss")}.jpg";
 
-        [TestMethod()]
-        public void ListTest()
-        {
-            var response = cosFileService.List("home", "SampleSite");
-            Assert.AreEqual(0, response.code);
-        }
-
-        [TestMethod()]
-        public void DeleteTest()
-        {
-            var response = cosFileService.Delete("home/sago.jpg", "SampleSite");
-            Assert.AreEqual(0, response.code);
-        }
-
-        [TestMethod()]
-        public void CreateTest()
-        {
+            //create
             using (var stream = TestHelper.GetStream("98.jpg"))
             {
-                var response = cosFileService.Create("home/98.jpg", "SampleSite", stream);
-
+                var createResponse = cosFileService.Create(remotePath, RepositoryName, stream);
+                Assert.AreEqual(0, createResponse.code);
             }
+
+            //get
+            var getResponse = cosFileService.Get(remotePath, RepositoryName);
+            Assert.AreEqual(0, getResponse.code);
+
+            //update
+            var customerHeaders = new Dictionary<string, string>
+            {
+                ["Alt"] = "test alt"
+            };
+            var updateResponse = cosFileService.Update(remotePath, RepositoryName, customerHeaders);
+            Assert.AreEqual(0, updateResponse.code);
+
+            //list
+            var listResponse = cosFileService.List("home", RepositoryName);
+            Assert.AreEqual(0, listResponse.code);
+
+            //delete
+            var deleteResponse = cosFileService.Delete(remotePath, RepositoryName);
+            Assert.AreEqual(0, deleteResponse.code);
         }
     }
 }

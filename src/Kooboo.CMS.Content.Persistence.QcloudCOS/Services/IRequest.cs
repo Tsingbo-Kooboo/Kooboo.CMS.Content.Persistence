@@ -11,6 +11,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 using Kooboo.Web.Script.Serialization;
+using Kooboo.IO;
 
 namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
 {
@@ -169,8 +170,8 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
                                 memStream.Write(beginBoundary, 0, beginBoundary.Length);
                                 const string filePartHeader =
                                     "Content-Disposition: form-data; name=\"fileContent\"; filename=\"{0}\"\r\n" +
-                                    "Content-Type: application/octet-stream\r\n\r\n";
-                                var headerText = string.Format(filePartHeader, item.Name);
+                                    "Content-Type: {1}\r\n\r\n";
+                                var headerText = string.Format(filePartHeader, context.remotePath, IOUtility.MimeType(context.remotePath));
                                 var headerbytes = Encoding.UTF8.GetBytes(headerText);
                                 memStream.Write(headerbytes, 0, headerbytes.Length);
 

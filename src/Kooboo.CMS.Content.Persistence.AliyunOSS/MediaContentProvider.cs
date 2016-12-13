@@ -66,11 +66,12 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS
                 {
                     blobPrefix += "/";
                 }
+                var len = blobPrefix.Length;
 
                 return ossClient
                     .ListObjects(account.Item2, blobPrefix)
                     .ObjectSummaries
-                    .Where(it => !it.Key.Substring(blobPrefix.Length).Contains("/"))
+                    .Where(it => it.Key.Length > len && !it.Key.Substring(len).Contains("/"))
                     .Skip(skip)
                     .Take(take)
                     .Select(it => it.BlobToMediaContent(

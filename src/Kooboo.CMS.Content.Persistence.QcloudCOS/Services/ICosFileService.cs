@@ -21,7 +21,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
 
         ListFile List(string path, string repository);
 
-        MoveFile Move(MoveFileRequest request);
+        MoveFile Move(string oldPath, string oldRepository, string newPath, string newRepository = null);
 
         DeleteFile Delete(string path, string repository);
 
@@ -65,7 +65,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
             return _request.Get<ListFile, ListFileRequest, ListFileData>(request, context);
         }
 
-        public MoveFile Move(MoveFileRequest request)
+        public MoveFile Move(string oldPath, string oldRepository, string newPath, string newRepository = null)
         {
             throw new NotImplementedException();
         }
@@ -85,11 +85,30 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
 
         public UpdateFile Update(string path, string repository, Dictionary<string, string> headers)
         {
+            var dict = new Dictionary<string, string>();
+            foreach (var header in headers)
+            {
+                if (ConstValues.SystemHeaders.Contains(header.Key))
+                {
+                    dict[header.Key] = header.Value;
+                }
+                else
+                {
+                    dict[ConstValues.CustomHeaders.XCosMeta + header.Key] = header.Value;
+                }
+            }
             var request = new UpdateFileRequest
             {
-                custom_headers = headers
+                custom_headers = dict,
             };
-            throw new NotImplementedException();
+            var context = new RequestContext
+            {
+                remotePath = MediaPathUtility.FilePath(path, repository),
+                repository = repository
+            };
+            var account = _accountService.Get(repository);
+            context.SignOnce(account);
+            return _request.Post<UpdateFile, UpdateFileRequest, string>(request, context);
         }
 
         public CreateFile Create(string path, string repository, Stream stream)
@@ -97,7 +116,8 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
             var context = new RequestContext
             {
                 remotePath = MediaPathUtility.FilePath(path, repository),
-                repository = repository
+                repository = repository,
+                contentType = ConstValues.MultipartFormData
             };
             var customHeaders = new Dictionary<string, string>
             {
