@@ -6,9 +6,7 @@ using System.Threading.Tasks;
 
 namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Models
 {
-
-
-    public class ListCosObjectRequest : RequestBase
+    public abstract class ListCosObjectRequest : RequestBase
     {
         public override string op { get; } = "list";
 
@@ -20,7 +18,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Models
         /// eListFileOnly 仅查询文件
         /// 默认值为 eListBoth 。
         /// </summary>
-        public ListObjectPattern pattern { get; set; }
+        public abstract ListObjectPattern pattern { get; }
 
         /// <summary>
         /// 0 正序（默认）；1 反序
@@ -37,15 +35,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Models
         public string context { get; set; }
     }
 
-    public class ListCosObject : ResponseBase<ListCosObjectData>
-    {
-        public ListCosObject()
-        {
-            data = new ListCosObjectData();
-        }
-    }
-
-    public class ListCosObjectData
+    public abstract class ListCosObjectData
     {
         public string context { get; set; }
 
@@ -54,30 +44,8 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Models
         public int dircount { get; set; }
 
         public int filecount { get; set; }
-
-        public CosObjectData infos { get; set; } = new CosObjectData();
     }
 
-    public class CosObjectData
-    {
-        public string biz_attr { get; set; }
 
-        public string ctime { get; set; }
 
-        public string mtime { get; set; }
-
-        public string name { get; set; }
-
-        #region --- File ---
-        public int? filelen { get; set; }
-
-        public int? filesize { get; set; }
-
-        public string sha { get; set; }
-
-        public string source_url { get; set; }
-
-        public string access_url { get; set; }
-        #endregion
-    }
 }

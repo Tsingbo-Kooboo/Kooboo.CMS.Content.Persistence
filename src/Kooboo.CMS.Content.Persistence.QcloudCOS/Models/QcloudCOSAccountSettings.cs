@@ -33,7 +33,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS
             {
                 instance = new QcloudCOSAccountSettings()
                 {
-                    AppId = "http://oss-cn-shanghai.aliyuncs.com",
+                    AppId = 0,
                     AccessKeyId = "Your Access Key Id Here",
                     AccessKeySecret = "Your Access Key Secrect Here",
                     BucketName = "Your Bucket Name Here",
@@ -44,7 +44,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS
                         {
                             RepositoryName = "sample",
                             BucketName="Sample",
-                            AppId = "http://oss-cn-shanghai.aliyuncs.com",
+                            AppId = 0,
                             CustomDomain = "http://sample.kooboo.com"
                         }
                     }

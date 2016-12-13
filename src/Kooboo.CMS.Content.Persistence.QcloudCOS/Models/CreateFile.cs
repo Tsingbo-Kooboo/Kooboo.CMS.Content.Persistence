@@ -25,8 +25,12 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Models
         public InsertOnlyOption insertOnly { get; set; }
     }
 
-    public class CreateFile:ResponseBase<CreateFileData>
+    public class CreateFile : ResponseBase<CreateFileData>
     {
+        public CreateFile()
+        {
+            data = new CreateFileData();
+        }
     }
 
     public class CreateFileData

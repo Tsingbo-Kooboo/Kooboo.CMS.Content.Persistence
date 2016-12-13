@@ -87,6 +87,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Web" />
@@ -132,6 +133,7 @@
     <Compile Include="MediaContentProvider.cs" />
     <Compile Include="MediaFolderProvider.cs" />
     <Compile Include="MediaFolders.cs" />
+    <Compile Include="Models\CosAccount.cs" />
     <Compile Include="Models\CreateFile.cs" />
     <Compile Include="Models\DeleteFolder.cs" />
     <Compile Include="Models\FileDetail.cs" />
@@ -139,6 +141,8 @@
     <Compile Include="Models\CreateFolder.cs" />
     <Compile Include="Models\EmptyResponse.cs" />
     <Compile Include="Models\FolderDetail.cs" />
+    <Compile Include="Models\ListFile.cs" />
+    <Compile Include="Models\ListFolder.cs" />
     <Compile Include="Models\MoveFile.cs" />
     <Compile Include="Models\EnumOptions.cs" />
     <Compile Include="Models\QcloudCOSAccountSettings.cs" />
@@ -159,6 +163,10 @@
     <Compile Include="sdk\Common\Request.cs" />
     <Compile Include="sdk\Common\SHA1.cs" />
     <Compile Include="sdk\Common\Sign.cs" />
+    <Compile Include="Services\ICosAccountService.cs" />
+    <Compile Include="Services\ICosFileService.cs" />
+    <Compile Include="Services\ICosFolderService.cs" />
+    <Compile Include="Services\IRequest.cs" />
     <Compile Include="StorageNamesEncoder.cs" />
     <Compile Include="TextContentBlobHelper.cs" />
     <Compile Include="TextContentFileProvider.cs" />

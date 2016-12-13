@@ -13,7 +13,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Models
 
     public class CreateFolder : ResponseBase<CreateFolderData>
     {
-        internal CreateFolder()
+        public CreateFolder()
         {
             data = new CreateFolderData();
         }
