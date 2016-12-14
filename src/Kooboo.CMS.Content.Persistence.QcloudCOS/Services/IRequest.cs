@@ -142,6 +142,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
                     var json = dict.ToJSON();
                     var jsonByte = Encoding.GetEncoding("utf-8").GetBytes(json);
                     memStream.Write(jsonByte, 0, jsonByte.Length);
+                    httpRequest.ContentType = ConstValues.ApplicationJson;
                 }
                 else
                 {

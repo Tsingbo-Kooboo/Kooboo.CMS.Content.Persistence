@@ -25,7 +25,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Models
         /// eWRPrivate 私有读写
         /// eWPrivateRPublic 公有读私有写
         /// </summary>
-        public FileAuthority? authority { get; set; }
+        public FileAuthority? authority { get; set; } = FileAuthority.eInvalid;
         /// <summary>
         /// 用户自定义 header，在执行更新操作时，只需填写需要增加或修改的项
         /// </summary>

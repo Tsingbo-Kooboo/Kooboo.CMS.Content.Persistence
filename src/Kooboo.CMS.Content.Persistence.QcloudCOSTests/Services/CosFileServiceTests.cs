@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Kooboo.CMS.Content.Persistence.QcloudCOS.Models;
 using Kooboo.CMS.Common.Runtime;
 using Kooboo.CMS.Content.Persistence.QcloudCOSTests;
+using Kooboo.CMS.Content.Persistence.QcloudCOS.Utilities;
 
 namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services.Tests
 {
@@ -32,7 +33,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services.Tests
         [TestMethod()]
         public void CrudTest()
         {
-            var remotePath = $"home/{DateTime.Now.ToString("yyyy-MM-dd-hh-mm-ss")}.jpg";
+            var remotePath = $"home/{DateTime.Now.ToString("yyyyMMdd-hhmmss")}.jpg";
 
             //create
             using (var stream = TestHelper.GetStream("98.jpg"))
@@ -53,19 +54,23 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services.Tests
             var updateResponse = cosFileService.Update(remotePath, RepositoryName, customerHeaders);
             Assert.AreEqual(0, updateResponse.code);
 
-            //list
-            var listResponse = cosFileService.List("home", RepositoryName);
-            Assert.AreEqual(0, listResponse.code);
-            foreach (var info in listResponse.data.infos)
-            {
-            }
             //move
             var newPath = "move-" + remotePath;
             var moveResponse = cosFileService.Move(remotePath, RepositoryName, newPath, RepositoryName);
             Assert.AreEqual(0, moveResponse.code);
+
             //delete
-            var deleteResponse = cosFileService.Delete(remotePath, RepositoryName);
+            var deleteResponse = cosFileService.Delete(newPath, RepositoryName);
             Assert.AreEqual(0, deleteResponse.code);
+
+            //list
+            var listResponse = cosFileService.List("move-home", RepositoryName);
+            Assert.AreEqual(0, listResponse.code);
+            foreach (var info in listResponse.data.infos)
+            {
+                var o = MediaPathUtility.GetPathRepository(info.source_url);
+                cosFileService.Delete(o.Key, o.Value);
+            }
         }
     }
 }
