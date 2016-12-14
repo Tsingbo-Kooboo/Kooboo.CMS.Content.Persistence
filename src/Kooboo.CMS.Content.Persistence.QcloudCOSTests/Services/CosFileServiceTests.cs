@@ -36,10 +36,11 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services.Tests
             var remotePath = $"home/{DateTime.Now.ToString("yyyyMMdd-hhmmss")}.jpg";
 
             //create
-            using (var stream = TestHelper.GetStream("98.jpg"))
+            using (var stream = TestHelper.GetStream("sago.jpg"))
             {
                 var createResponse = cosFileService.Create(remotePath, RepositoryName, stream);
                 Assert.AreEqual(0, createResponse.code);
+                Assert.IsTrue(createResponse.data.url.Contains(remotePath));
             }
 
             //get

@@ -13,9 +13,11 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
     {
         CreateFolder Create(string path, string repository);
 
-        DeleteFolder Delete(DeleteRequest request);
+        FolderDetail Get(string path, string repository);
 
-        ListFolder List(ListFolderRequest request);
+        DeleteFolder Delete(string path, string repository);
+
+        ListFolder List(string path, string repository);
     }
 
     [Dependency(typeof(ICosFolderService))]
@@ -30,10 +32,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
         }
         public CreateFolder Create(string path, string repository)
         {
-            var request = new CreateFolderRequest
-            {
-                
-            };
+            var request = new CreateFolderRequest();
             var context = new RequestContext
             {
                 remotePath = MediaPathUtility.FolderPath(path, repository)
@@ -43,14 +42,40 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
             return _request.Post<CreateFolder, CreateFolderRequest, CreateFolderData>(request, context);
         }
 
-        public DeleteFolder Delete(DeleteRequest request)
+        public DeleteFolder Delete(string path, string repository)
         {
-            throw new NotImplementedException();
+            var request = new DeleteRequest();
+            var context = new RequestContext
+            {
+                remotePath = MediaPathUtility.FolderPath(path, repository)
+            };
+            var account = _accountService.Get(repository);
+            context.SignOnce(account);
+            return _request.Post<DeleteFolder, DeleteRequest, string>(request, context);
         }
 
-        public ListFolder List(ListFolderRequest request)
+        public ListFolder List(string path, string repository)
         {
-            throw new NotImplementedException();
+            var request = new ListFolderRequest();
+            var context = new RequestContext
+            {
+                remotePath = MediaPathUtility.FolderPath(path, repository)
+            };
+            var account = _accountService.Get(repository);
+            context.Sign(account);
+            return _request.Get<ListFolder, ListFolderRequest, ListCosFolderData>(request, context);
+        }
+
+        public FolderDetail Get(string path, string repository)
+        {
+            var request = new FolderDetailRequest();
+            var context = new RequestContext
+            {
+                remotePath = MediaPathUtility.FolderPath(path, repository)
+            };
+            var account = _accountService.Get(repository);
+            context.Sign(account);
+            return _request.Get<FolderDetail, FolderDetailRequest, FolderDetailData>(request, context);
         }
     }
 
