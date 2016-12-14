@@ -129,6 +129,7 @@
     <Compile Include="Extensions\DateTimeExtensions.cs" />
     <Compile Include="Extensions\DictionaryExtensions.cs" />
     <Compile Include="Extensions\ObjectExtensions.cs" />
+    <Compile Include="MediaContentProvider.cs" />
     <Compile Include="MediaFolderProvider.cs" />
     <Compile Include="Models\ConstValues.cs" />
     <Compile Include="Models\CosAccount.cs" />
