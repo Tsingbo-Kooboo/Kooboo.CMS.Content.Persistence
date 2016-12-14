@@ -30,7 +30,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services.Tests
 
         const string RepositoryName = "SampleSite";
         [TestMethod()]
-        public void CRUDTest()
+        public void CrudTest()
         {
             var remotePath = $"home/{DateTime.Now.ToString("yyyy-MM-dd-hh-mm-ss")}.jpg";
 
@@ -56,7 +56,13 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services.Tests
             //list
             var listResponse = cosFileService.List("home", RepositoryName);
             Assert.AreEqual(0, listResponse.code);
-
+            foreach (var info in listResponse.data.infos)
+            {
+            }
+            //move
+            var newPath = "move-" + remotePath;
+            var moveResponse = cosFileService.Move(remotePath, RepositoryName, newPath, RepositoryName);
+            Assert.AreEqual(0, moveResponse.code);
             //delete
             var deleteResponse = cosFileService.Delete(remotePath, RepositoryName);
             Assert.AreEqual(0, deleteResponse.code);

@@ -67,7 +67,21 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
 
         public MoveFile Move(string oldPath, string oldRepository, string newPath, string newRepository = null)
         {
-            throw new NotImplementedException();
+            if (string.IsNullOrEmpty(newRepository))
+            {
+                newRepository = oldRepository;
+            }
+            var request = new MoveFileRequest
+            {
+                dest_fileid = "/" + MediaPathUtility.FilePath(newPath, newRepository).TrimStart('/'),
+            };
+            var context = new RequestContext
+            {
+                remotePath = MediaPathUtility.FilePath(oldPath, oldRepository)
+            };
+            var account = _accountService.Get(oldRepository);
+            context.SignOnce(account);
+            return _request.Post<MoveFile, MoveFileRequest, string>(request, context);
         }
 
         public DeleteFile Delete(string path, string repository)

@@ -14,6 +14,8 @@ using Kooboo.Extensions;
 using Kooboo.CMS.Content.Models;
 using Kooboo.Web.Url;
 using System.IO;
+using Kooboo.CMS.Common.Runtime;
+using Kooboo.CMS.Content.Persistence.QcloudCOS.Services;
 
 namespace Kooboo.CMS.Content.Persistence.QcloudCOS
 {
@@ -193,15 +195,10 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS
         #endregion
 
         //#region InitializeRepositoryContainer
-        //public static Bucket InitializeRepositoryContainer(Repository repository)
-        //{
-        //    var account = OssAccountHelper.GetOssClientBucket(repository);
-        //    var ossClient = account.Item1;
-        //    var bucketName = account.Item2;
-        //    var container = ossClient.CreateBucket(bucketName);
-        //    ossClient.SetBucketAcl(bucketName, CannedAccessControlList.PublicRead);
-        //    return container;
-        //}
+        public static void InitializeRepositoryContainer(Repository repository)
+        {
+            var provider = EngineContext.Current.Resolve<ICosFileService>();
+        }
         //#endregion
 
         #region DeleteRepositoryContainer

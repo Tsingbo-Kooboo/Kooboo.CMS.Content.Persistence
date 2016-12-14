@@ -22,7 +22,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Models
         public int to_over_write { get; set; } = 1;
     }
 
-    public class MoveFile
+    public class MoveFile : ResponseBase<string>
     {
     }
 }

@@ -16,13 +16,13 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS
 {
     public class RepositoryProvider : IRepositoryProvider
     {
-        public void Initialize(Models.Repository repository)
+        public void Initialize(Repository repository)
         {
             inner.Initialize(repository);
             MediaBlobHelper.InitializeRepositoryContainer(repository);
         }
 
-        public void Remove(Models.Repository item)
+        public void Remove(Repository item)
         {
             inner.Remove(item);
             MediaBlobHelper.DeleteRepositoryContainer(item);

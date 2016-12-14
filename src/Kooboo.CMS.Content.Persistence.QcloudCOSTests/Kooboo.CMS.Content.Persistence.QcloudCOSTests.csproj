@@ -129,7 +129,7 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\CosFileServiceTests.cs" />
-    <Compile Include="Services\DefaultRequestTests.cs" />
+    <Compile Include="Services\CosFolderServiceTests.cs" />
     <Compile Include="TestHelper.cs" />
   </ItemGroup>
   <ItemGroup>

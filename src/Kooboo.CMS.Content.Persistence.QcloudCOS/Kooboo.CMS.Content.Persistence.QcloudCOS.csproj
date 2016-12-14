@@ -129,7 +129,6 @@
     <Compile Include="Extensions\ObjectExtensions.cs" />
     <Compile Include="Models\ConstValues.cs" />
     <Compile Include="Models\CosAccount.cs" />
-    <Compile Include="Models\CosDefaultValue.cs" />
     <Compile Include="Models\CreateFile.cs" />
     <Compile Include="Models\DeleteFile.cs" />
     <Compile Include="Models\DeleteFolder.cs" />

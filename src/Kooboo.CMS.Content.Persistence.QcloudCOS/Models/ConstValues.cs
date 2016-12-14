@@ -8,6 +8,10 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Models
 {
     public class ConstValues
     {
+        public const string Host = "web.file.myqcloud.com";
+        public const string UserAgent = "cos-dotnet-sdk-v4.2";
+        public const string Accept = "*/*";
+
         public const string Authorization = "Authorization";
         public const string ContentType = "Content-Type";
         public const string MultipartFormData = "multipart/form-data";

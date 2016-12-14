@@ -47,7 +47,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
                 COSAPI_CGI_URL,
                 account.AppId.ToString(),
                 account.BucketName,
-                CosHttpUtility.EncodeRemotePath(context.remotePath));
+                context.remotePath);
         }
 
         public T Get<T, TR, TC>(TR request, RequestContext context)
@@ -67,12 +67,12 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
                     url = url.AddQueryParam(item.Name, HttpUtility.UrlEncode(item.GetValue(request)?.ToString()));
                 }
                 HttpWebRequest httpRequest = (HttpWebRequest)WebRequest.Create(url);
-                httpRequest.Accept = CosDefaultValue.ACCEPT;
+                httpRequest.Accept = ConstValues.Accept;
                 httpRequest.KeepAlive = true;
-                httpRequest.UserAgent = CosDefaultValue.USER_AGENT_VERSION;
+                httpRequest.UserAgent = ConstValues.UserAgent;
                 httpRequest.Timeout = 60 * 1000;
-                httpRequest.ContentType = "application/json";
-                httpRequest.Host = "web.file.myqcloud.com";
+                httpRequest.ContentType = ConstValues.ApplicationJson;
+                httpRequest.Host = ConstValues.Host;
                 foreach (var item in context.headers)
                 {
                     httpRequest.Headers.Add(item.Key, item.Value);
@@ -120,19 +120,19 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
                 var bytes = props.Where(it => it.PropertyType == typeof(byte[]));
 
                 HttpWebRequest httpRequest = (HttpWebRequest)WebRequest.Create(url);
-                httpRequest.Accept = CosDefaultValue.ACCEPT;
+                httpRequest.Accept = ConstValues.Accept;
                 httpRequest.KeepAlive = true;
-                httpRequest.UserAgent = CosDefaultValue.USER_AGENT_VERSION;
+                httpRequest.UserAgent = ConstValues.UserAgent;
                 httpRequest.Timeout = 60 * 1000;
                 httpRequest.Method = "POST";
-                httpRequest.Host = "web.file.myqcloud.com";
+                httpRequest.Host = ConstValues.Host;
 
                 foreach (var item in context.headers)
                 {
                     httpRequest.Headers.Add(item.Key, item.Value);
                 }
                 var memStream = new MemoryStream();
-                if (context.contentType == "application/json")
+                if (context.contentType == ConstValues.ApplicationJson)
                 {
                     var dict = new Dictionary<string, string>();
                     foreach (var item in fields)
