@@ -16,6 +16,7 @@ using Kooboo.Web.Url;
 using System.IO;
 using Kooboo.CMS.Common.Runtime;
 using Kooboo.CMS.Content.Persistence.QcloudCOS.Services;
+using Kooboo.CMS.Content.Persistence.QcloudCOS.Models;
 
 namespace Kooboo.CMS.Content.Persistence.QcloudCOS
 {
@@ -156,11 +157,12 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS
         #endregion
 
         #region BlobToMediaContent
-        public static MediaContent BlobToMediaContent(this OssObjectSummary blob, MediaContent mediaContent)
+        public static MediaContent BlobToMediaContent(this FileDetail blob, MediaContent mediaContent)
         {
+            var data = blob.data;
             mediaContent.Published = true;
-            mediaContent.Size = blob.Size;
-            var fileFullName = blob.Name;
+            mediaContent.Size = data.filesize;
+            var fileFullName = data.source_url;
             mediaContent.FileName = Path.GetFileName(fileFullName);
             mediaContent.UserKey = mediaContent.FileName;
             mediaContent.UUID = mediaContent.FileName;
@@ -197,22 +199,16 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS
         //#region InitializeRepositoryContainer
         public static void InitializeRepositoryContainer(Repository repository)
         {
-            var provider = EngineContext.Current.Resolve<ICosFileService>();
+            var provider = EngineContext.Current.Resolve<ICosFolderService>();
+            provider.Create("/", repository.Name);
         }
         //#endregion
 
         #region DeleteRepositoryContainer
         public static void DeleteRepositoryContainer(Repository repository)
         {
-            throw new NotImplementedException();
-            //var account = OssAccountHelper.GetOssClientBucket(repository);
-            //var ossClient = account.Item1;
-            //var bucket = account.Item2;
-            //var items = ossClient.ListObjects(bucket, repository.Name)
-            //    .ObjectSummaries
-            //    .Select(it => it.Key)
-            //    .ToList();
-            //ossClient.DeleteObjects(new DeleteObjectsRequest(bucket, items));
+            var provider = EngineContext.Current.Resolve<ICosFolderService>();
+            provider.Delete("/", repository.Name);
         }
         #endregion
     }

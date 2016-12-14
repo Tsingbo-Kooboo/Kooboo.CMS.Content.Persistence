@@ -11,6 +11,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Kooboo.CMS.Content.Models;
+using Kooboo.CMS.Common.Runtime.Dependency;
+using Kooboo.CMS.Content.Persistence.QcloudCOS.Services;
+using Kooboo.CMS.Common.Runtime;
 
 namespace Kooboo.CMS.Content.Persistence.QcloudCOS
 {
@@ -19,13 +22,13 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS
         public void Initialize(Repository repository)
         {
             inner.Initialize(repository);
-            MediaBlobHelper.InitializeRepositoryContainer(repository);
+            _folderService.Create("/", repository.Name);
         }
 
         public void Remove(Repository item)
         {
             inner.Remove(item);
-            MediaBlobHelper.DeleteRepositoryContainer(item);
+            _folderService.Delete("/", item.Name);
         }
 
         public bool TestDbConnection()
@@ -33,10 +36,13 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS
             return inner.TestDbConnection();
         }
 
-        private IRepositoryProvider inner;
+        private readonly IRepositoryProvider inner;
+        private readonly ICosFolderService _folderService;
+
         public RepositoryProvider(IRepositoryProvider innerProvider)
         {
             inner = innerProvider;
+            _folderService = EngineContext.Current.Resolve<ICosFolderService>();
         }
         public IEnumerable<Repository> All()
         {
@@ -72,7 +78,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS
         {
             inner.Export(repository, outputStream);
         }
-    
+
         public Repository Get(Repository dummy)
         {
             return inner.Get(dummy);

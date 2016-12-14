@@ -89,6 +89,7 @@
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Caching" />
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Web" />
     <Reference Include="System.Web.Helpers, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
@@ -124,9 +125,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Controllers\QcloudResourceController.cs" />
+    <Compile Include="DependencyRegistrar.cs" />
     <Compile Include="Extensions\DateTimeExtensions.cs" />
     <Compile Include="Extensions\DictionaryExtensions.cs" />
     <Compile Include="Extensions\ObjectExtensions.cs" />
+    <Compile Include="MediaFolderProvider.cs" />
     <Compile Include="Models\ConstValues.cs" />
     <Compile Include="Models\CosAccount.cs" />
     <Compile Include="Models\CreateFile.cs" />
@@ -146,6 +149,7 @@
     <Compile Include="Models\ResponseBase.cs" />
     <Compile Include="Models\UpdateFile.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RepositoryProvider.cs" />
     <Compile Include="Services\ICosAccountService.cs" />
     <Compile Include="Services\ICosFileService.cs" />
     <Compile Include="Services\ICosFolderService.cs" />

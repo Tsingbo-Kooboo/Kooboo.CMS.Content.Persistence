@@ -40,5 +40,20 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
                 AppId = appId
             };
         }
+
+        /// <summary>
+        /// 外网可访问的地址
+        /// </summary>
+        /// <param name="repository"></param>
+        /// <param name="url"></param>
+        /// <returns></returns>
+        public string ResourceUrl(string repository, string url)
+        {
+            var account = Get(repository);
+            var customUri = new Uri(account.CustomDomain, UriKind.Absolute);
+            var uri = new Uri(url, UriKind.RelativeOrAbsolute);
+            var newUri = new UriBuilder(customUri.Scheme, customUri.Host, customUri.Port, uri.LocalPath);
+            return newUri.Uri.AbsoluteUri;
+        }
     }
 }

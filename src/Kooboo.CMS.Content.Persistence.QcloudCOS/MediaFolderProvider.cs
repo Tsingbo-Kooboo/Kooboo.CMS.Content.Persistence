@@ -10,10 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Kooboo.CMS.Content.Models.Paths;
 using Kooboo.CMS.Content.Models;
-using System.Runtime.Serialization;
-using Kooboo.Runtime.Serialization;
 using Ionic.Zip;
 using Kooboo.CMS.Content.Services;
 using System.IO;
@@ -22,55 +19,156 @@ using Kooboo.Web.Url;
 using Kooboo.CMS.Content.Caching;
 using Kooboo.CMS.Caching;
 using Kooboo.IO;
+using Kooboo.CMS.Common.Runtime.Dependency;
+using Kooboo.CMS.Content.Persistence.QcloudCOS.Services;
+using System.Threading;
+using Kooboo.HealthMonitoring;
+using Kooboo.CMS.Content.Persistence.QcloudCOS.Models;
+using Kooboo.Web.Script.Serialization;
+using Kooboo.CMS.Content.Persistence.QcloudCOS.Extensions;
 
 namespace Kooboo.CMS.Content.Persistence.QcloudCOS
 {
-    [Kooboo.CMS.Common.Runtime.Dependency.Dependency(typeof(IMediaFolderProvider), Order = 2)]
-    [Kooboo.CMS.Common.Runtime.Dependency.Dependency(typeof(IProvider<MediaFolder>), Order = 2)]
-    public class MediaFolderProvider : IMediaFolderProvider
+    public partial class MediaFolderProvider
     {
-        private readonly string bucket;
-        private readonly CosClient ossClient;
-        public MediaFolderProvider()
+        private IEnumerable<MediaFolder> ToMediaFolders(Repository repository, Dictionary<string, CosFolderData> folders)
         {
-            var account = OssAccountHelper.GetOssClientBucket(Repository.Current);
-            ossClient = account.Item1;
-            bucket = account.Item2;
+            return folders.Select(it => ToMediaFolder(repository, it.Key, it.Value)).ToArray();
+        }
+
+        private MediaFolder ToMediaFolder(Repository repository, string fullName, CosFolderData folderProperties)
+        {
+            var json = JsonHelper.Deserialize<Dictionary<string, string>>(folderProperties.biz_attr);
+
+            return new MediaFolder(repository, fullName)
+            {
+                DisplayName = folderProperties.name,
+                UserId = json.GetString("UserId"),
+                UtcCreationDate = json.GetDateTime("UtcCreationDate", DateTime.UtcNow),
+                AllowedExtensions = new string[] { }
+            };
+        }
+
+        private Dictionary<string, CosFolderData> GetList(Repository repository)
+        {
+            var mediaFolders = repository
+                .ObjectCache()
+                .GetCache($"Qcloud-COS-MediaFolders-Cachings-{repository.Name}", () =>
+                {
+                    Dictionary<string, CosFolderData> folders = null;
+                    try
+                    {
+                        var folderList = _folderService.List("/", repository.Name);
+                        folders = folderList.data.infos.ToDictionary(it => it.name, it => it);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.LogException(ex);
+                    }
+                    if (folders == null)
+                    {
+                        folders = new Dictionary<string, CosFolderData>();
+                    }
+                    return new Dictionary<string, CosFolderData>(folders, StringComparer.OrdinalIgnoreCase);
+                });
+            return mediaFolders;
+        }
+    }
+
+    [Dependency(typeof(IMediaFolderProvider), Order = 2)]
+    [Dependency(typeof(IProvider<MediaFolder>), Order = 2)]
+    public partial class MediaFolderProvider : IMediaFolderProvider
+    {
+        static ReaderWriterLockSlim locker = new ReaderWriterLockSlim();
+
+        private readonly ICosAccountService _accountService;
+        private readonly ICosFolderService _folderService;
+        private readonly ICosFileService _fileService;
+        public MediaFolderProvider(ICosAccountService accountService,
+            ICosFolderService folderService,
+            ICosFileService fileService)
+        {
+            _accountService = accountService;
+            _folderService = folderService;
+            _fileService = fileService;
         }
 
         public IQueryable<MediaFolder> ChildFolders(MediaFolder parent)
         {
-            return MediaFolders.ChildFolders(parent).AsQueryable();
+            locker.EnterReadLock();
+            try
+            {
+                var query = ToMediaFolders(parent.Repository, GetList(parent.Repository));
+                //loop bug in azure
+                query = query.Where(it => (parent == null && it.Parent == null) || (it.Parent != null && it.Parent.UUID == parent.UUID));
+                return query.AsQueryable();
+            }
+            finally
+            {
+                locker.ExitReadLock();
+            }
         }
 
         public IEnumerable<MediaFolder> All(Repository repository)
         {
-            return MediaFolders.RootFolders(repository).AsQueryable();
+            return ToMediaFolders(repository, GetList(repository));
         }
 
         public MediaFolder Get(MediaFolder dummy)
         {
-            return MediaFolders.GetFolder(dummy);
+            locker.EnterReadLock();
+            try
+            {
+                var folders = GetList(dummy.Repository);
+                if (folders.ContainsKey(dummy.FullName))
+                {
+                    return ToMediaFolder(dummy.Repository, dummy.FullName, folders[dummy.FullName]);
+                }
+                return null;
+            }
+            finally
+            {
+                locker.ExitReadLock();
+            }
         }
 
-        public void Add(MediaFolder item)
+        public void Add(MediaFolder folder)
         {
-            MediaFolders.AddFolder(item);
+            locker.EnterWriteLock();
+            try
+            {
+                var folders = GetList(folder.Repository);
+                var name = folder.FullName.Trim('~');
+                if (!folders.ContainsKey(name))
+                {
+                    var newFolder = _folderService.Create(name, folder.Repository.Name);
+                }
+            }
+            finally
+            {
+                locker.ExitWriteLock();
+            }
         }
 
         public void Update(MediaFolder @new, MediaFolder old)
         {
-            MediaFolders.UpdateFolder(@new);
+            throw new NotImplementedException();
         }
 
         public void Remove(MediaFolder item)
         {
-            MediaFolders.RemoveFolder(item);
-            (new MediaContentProvider()).Delete(item);
+            locker.EnterWriteLock();
+            try
+            {
+                _folderService.Delete(item.FullName.Trim('~'), item.Repository.Name);
+            }
+            finally
+            {
+                locker.ExitWriteLock();
+            }
         }
 
-
-        public void Export(Repository repository, IEnumerable<MediaFolder> models, System.IO.Stream outputStream)
+        public void Export(Repository repository, IEnumerable<MediaFolder> models, Stream outputStream)
         {
             throw new NotImplementedException();
         }
@@ -119,113 +217,74 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS
 
         public void Rename(MediaFolder @new, MediaFolder old)
         {
-            MediaFolders.RenameFolder(@new, old);
-            var oldPrefix = old.GetMediaFolderItemPath(null) + "/";
-            var newPrefix = @new.GetMediaFolderItemPath(null) + "/";
-            MoveDirectory(ossClient, bucket, newPrefix, oldPrefix);
+            throw new NotImplementedException();
         }
-
 
         public void Export(Repository repository, string baseFolder, string[] folders, string[] docs, Stream outputStream)
         {
-            ZipFile zipFile = new ZipFile();
-            var basePrefix = StorageNamesEncoder.EncodeContainerName(repository.Name) + "/" + MediaBlobHelper.MediaDirectoryName + "/";
-            if (!string.IsNullOrEmpty(baseFolder))
-            {
-                var baseMediaFolder = ServiceFactory.MediaFolderManager.Get(repository, baseFolder);
-                basePrefix = baseMediaFolder.GetMediaFolderItemPath(null) + "/";
-            }
+            throw new NotImplementedException();
 
-            //add file
-            if (docs != null)
-            {
-                foreach (var doc in docs)
-                {
-                    var key = basePrefix + StorageNamesEncoder.EncodeBlobName(doc);
-                    var bytes = ossClient.GetObjectData(bucket, key);
-                    zipFile.AddEntry(doc, bytes);
-                }
-            }
-            //add folders
-            if (folders != null)
-            {
-                foreach (var folder in folders)
-                {
-                    var folderName = folder.Split('~').LastOrDefault();
-                    zipFolder(ossClient, basePrefix, folderName, "", ref zipFile);
-                }
-            }
-            zipFile.Save(outputStream);
+            //ZipFile zipFile = new ZipFile();
+            //var basePrefix = StorageNamesEncoder.EncodeContainerName(repository.Name) + "/" + MediaBlobHelper.MediaDirectoryName + "/";
+            //if (!string.IsNullOrEmpty(baseFolder))
+            //{
+            //    var baseMediaFolder = ServiceFactory.MediaFolderManager.Get(repository, baseFolder);
+            //    basePrefix = baseMediaFolder.GetMediaFolderItemPath(null) + "/";
+            //}
+
+            ////add file
+            //if (docs != null)
+            //{
+            //    foreach (var doc in docs)
+            //    {
+            //        var key = basePrefix + StorageNamesEncoder.EncodeBlobName(doc);
+            //        var bytes = ossClient.GetObjectData(bucket, key);
+            //        zipFile.AddEntry(doc, bytes);
+            //    }
+            //}
+            ////add folders
+            //if (folders != null)
+            //{
+            //    foreach (var folder in folders)
+            //    {
+            //        var folderName = folder.Split('~').LastOrDefault();
+            //        zipFolder(ossClient, basePrefix, folderName, "", ref zipFile);
+            //    }
+            //}
+            //zipFile.Save(outputStream);
         }
 
-        private void zipFolder(CosClient ossClient, string basePrefix, string folderName, string zipDir, ref ZipFile zipFile)
-        {
-            zipDir = string.IsNullOrEmpty(zipDir) ? folderName : zipDir + "/" + folderName;
-            zipFile.AddDirectoryByName(zipDir);
-            var folderPrefix = basePrefix + StorageNamesEncoder.EncodeBlobName(folderName) + "/";
+        //private void zipFolder(CosClient ossClient, string basePrefix, string folderName, string zipDir, ref ZipFile zipFile)
+        //{
+        //    zipDir = string.IsNullOrEmpty(zipDir) ? folderName : zipDir + "/" + folderName;
+        //    zipFile.AddDirectoryByName(zipDir);
+        //    var folderPrefix = basePrefix + StorageNamesEncoder.EncodeBlobName(folderName) + "/";
 
-            var blobs = ossClient.ListBlobsWithPrefix(bucket, folderPrefix);
-            foreach (var blob in blobs.ObjectSummaries)
-            {
-                if (blob.Key.EndsWith("/"))
-                {
-                    continue;
-                }
-                var bytes = ossClient.GetObjectData(bucket, blob.Key);
-                if (bytes.Length > 0)
-                {
-                    zipFile.AddEntry(zipDir + "/" + blob.Key, bytes);
-                }
-            }
-        }
+        //    var blobs = ossClient.ListBlobsWithPrefix(bucket, folderPrefix);
+        //    foreach (var blob in blobs.ObjectSummaries)
+        //    {
+        //        if (blob.Key.EndsWith("/"))
+        //        {
+        //            continue;
+        //        }
+        //        var bytes = ossClient.GetObjectData(bucket, blob.Key);
+        //        if (bytes.Length > 0)
+        //        {
+        //            zipFile.AddEntry(zipDir + "/" + blob.Key, bytes);
+        //        }
+        //    }
+        //}
+
         private void MoveContent(string oldKey, string newKey)
         {
-            if (ossClient.DoesObjectExist(bucket, oldKey)
-                && !ossClient.DoesObjectExist(bucket, newKey))
-            {
-                var oldContentBlob = ossClient.GetObject(bucket, oldKey);
-                try
-                {
-                    var result = ossClient.CopyObject(new CopyObjectRequest(bucket, oldKey, bucket, newKey));
-                }
-                catch (Exception e)
-                {
-                    ossClient.PutObject(bucket, newKey, oldContentBlob.Content);
-                    Kooboo.HealthMonitoring.Log.LogException(e);
-                }
-                ossClient.DeleteObject(bucket, oldKey);
-            }
+
         }
 
-        private void MoveDirectory(CosClient ossClient, string bucket, string newPrefix, string oldPrefix)
+        private void MoveDirectory(string repository, string newPrefix, string oldPrefix)
         {
-            var blobs = ossClient.ListBlobsWithPrefix(bucket, oldPrefix);
-            foreach (var blob in blobs.ObjectSummaries)
+            var files = _fileService.List(oldPrefix, repository);
+            foreach (var item in files.data.infos)
             {
-                if (blob.Key.EndsWith("/"))
-                {
-                    var names = blob.Key.Substring(bucket.Length).Split('/');
-                    for (var i = names.Length - 1; i >= 0; i--)
-                    {
-                        if (!string.IsNullOrEmpty(names[i]))
-                        {
-                            MoveDirectory(ossClient,
-                                bucket,
-                                $"{newPrefix}{ StorageNamesEncoder.EncodeBlobName(names[i])}/",
-                                $"{oldPrefix}{ StorageNamesEncoder.EncodeBlobName(names[i])}/");
-                            break;
-                        }
-                    }
-                }
-                else
-                {
-                    if (!ossClient.DoesObjectExist(bucket, blob.Key))
-                    {
-                        continue;
-                    }
-                    var newKey = UrlUtility.Combine(newPrefix, blob.Key.Substring(oldPrefix.Length));
-                    MoveContent(blob.Key, newKey);
-                }
             }
         }
     }

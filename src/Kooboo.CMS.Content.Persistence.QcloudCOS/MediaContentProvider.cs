@@ -16,6 +16,9 @@ using Kooboo.CMS.Content.Query;
 using System.IO;
 using Kooboo.CMS.Content.Query.Translator;
 using Kooboo.CMS.Common.Runtime.Dependency;
+using Kooboo.CMS.Common.Runtime;
+using Kooboo.CMS.Content.Persistence.QcloudCOS.Services;
+
 namespace Kooboo.CMS.Content.Persistence.QcloudCOS
 {
     #region Translator
@@ -261,14 +264,12 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS
     [Dependency(typeof(IContentProvider<MediaContent>), Order = 2)]
     public class MediaContentProvider : IMediaContentProvider
     {
-        private readonly CosClient ossClient;
-        private readonly string bucket;
-
-        public MediaContentProvider()
+        private ICosFileService _fileService;
+        private ICosAccountService _accountService;
+        public MediaContentProvider(ICosFileService fileService, ICosAccountService accountService)
         {
-            var account = OssAccountHelper.GetOssClientBucket(Repository.Current);
-            ossClient = account.Item1;
-            bucket = account.Item2;
+            _fileService = fileService;
+            _accountService = accountService;
         }
 
         #region IMediaContentProvider
@@ -276,7 +277,6 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS
         {
             var repository = content.GetRepository();
             var account = OssAccountHelper.GetOssClientBucket(repository);
-
             if (content.ContentFile != null)
             {
                 content.FileName = content.ContentFile.FileName;
@@ -415,7 +415,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS
 
         private void ImportMediaFolderDataCascading(MediaFolder mediaFolder)
         {
-            Default.MediaContentProvider fileProvider = Kooboo.CMS.Common.Runtime.EngineContext.Current.Resolve<Kooboo.CMS.Content.Persistence.Default.MediaContentProvider>();
+            Default.MediaContentProvider fileProvider = EngineContext.Current.Resolve<Default.MediaContentProvider>();
 
             //add media folder
             MediaFolderProvider folderProvider = new MediaFolderProvider();
