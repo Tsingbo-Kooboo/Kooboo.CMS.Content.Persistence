@@ -11,13 +11,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Kooboo.CMS.Content.Models;
-using Aliyun.OSS;
 using Kooboo.CMS.Content.Query.Expressions;
 using Kooboo.CMS.Content.Query;
 using System.IO;
 using Kooboo.CMS.Content.Query.Translator;
+using Kooboo.CMS.Common.Runtime.Dependency;
+using Kooboo.CMS.Common.Runtime;
+using Kooboo.CMS.Content.Persistence.QcloudCOS.Services;
+using Kooboo.CMS.Content.Persistence.QcloudCOS.Extensions;
+using Kooboo.CMS.Content.Persistence.QcloudCOS.Utilities;
+using System.Net;
 
-namespace Kooboo.CMS.Content.Persistence.AliyunOSS
+namespace Kooboo.CMS.Content.Persistence.QcloudCOS
 {
     #region Translator
     public class QueryExpressionTranslator : ExpressionVisitor
@@ -28,21 +33,23 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS
         string fileName = null;
         string prefix = null;
 
-        public IEnumerable<MediaContent> Translate(IExpression expression, OssClient ossClient, MediaFolder mediaFolder)
+        public IEnumerable<MediaContent> Translate(IExpression expression,
+             MediaFolder mediaFolder,
+             ICosFolderService folderService,
+             ICosFileService fileService,
+             ICosAccountService accountService)
         {
-            var account = OssAccountHelper.GetOssClientBucket(mediaFolder.Repository);
             this.Visite(expression);
-            var key = mediaFolder.GetMediaFolderItemPath(fileName);
             if (!string.IsNullOrEmpty(fileName))
             {
-                if (!ossClient.DoesObjectExist(account.Item2, key))
+                var blob = fileService.Get(fileName, mediaFolder.Repository.Name);
+                if (blob.code != 0)
                 {
                     return Enumerable.Empty<MediaContent>();
                 }
-                var blob = ossClient.GetObject(account.Item2, key);
                 return new[] { blob.BlobToMediaContent(
                     new MediaContent(mediaFolder.Repository.Name, mediaFolder.FullName),
-                    ossClient)
+                    accountService)
                 };
             }
             else
@@ -60,24 +67,11 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS
                     skip = Skip.Value;
                     maxResult += skip;
                 }
-                var blobPrefix = mediaFolder.GetMediaFolderItemPath(prefix);
 
-                if (string.IsNullOrEmpty(prefix))
-                {
-                    blobPrefix += "/";
-                }
-                var len = blobPrefix.Length;
-
-                return ossClient
-                    .ListObjects(account.Item2, blobPrefix)
-                    .ObjectSummaries
-                    .Where(it => it.Key.Length > len && !it.Key.Substring(len).Contains("/"))
-                    .Skip(skip)
-                    .Take(take)
-                    .Select(it => it.BlobToMediaContent(
-                        new MediaContent(mediaFolder.Repository.Name, mediaFolder.FullName),
-                        ossClient)
-                        );
+                return fileService.List(mediaFolder.FullName, mediaFolder.Repository.Name, take)
+                    .data.infos.Select(it => it.BlobToMediaContent(
+                    new MediaContent(mediaFolder.Repository.Name, mediaFolder.FullName),
+                    accountService));
             }
         }
 
@@ -102,16 +96,16 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS
         }
         private void ValidExpression(string fieldName)
         {
-            //if (!fieldName.EqualsOrNullEmpty("FileName", StringComparison.OrdinalIgnoreCase)
-            //    && !fieldName.EqualsOrNullEmpty("UUID", StringComparison.OrdinalIgnoreCase)
-            //    && !fieldName.EqualsOrNullEmpty("UserKey", StringComparison.OrdinalIgnoreCase))
-            //{      
-            //    //throw new NotSupportedException("The azure storage provider only support query by FileName,UUID,UserKey.");
-            //}      
-            //if (!string.IsNullOrEmpty(fileName) || !string.IsNullOrEmpty(prefix))
-            //{
-            //    throw new NotSupportedException("The azure storage provider only support query by one condition.");
-            //}
+            if (!fieldName.EqualsOrNullEmpty("FileName", StringComparison.OrdinalIgnoreCase)
+                && !fieldName.EqualsOrNullEmpty("UUID", StringComparison.OrdinalIgnoreCase)
+                && !fieldName.EqualsOrNullEmpty("UserKey", StringComparison.OrdinalIgnoreCase))
+            {
+                //throw new NotSupportedException("The azure storage provider only support query by FileName,UUID,UserKey.");
+            }
+            if (!string.IsNullOrEmpty(fileName) || !string.IsNullOrEmpty(prefix))
+            {
+                throw new NotSupportedException("The azure storage provider only support query by one condition.");
+            }
         }
         protected override void VisitWhereStartsWith(WhereStartsWithExpression expression)
         {
@@ -259,50 +253,53 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS
         #endregion
     }
     #endregion
-    [Kooboo.CMS.Common.Runtime.Dependency.Dependency(typeof(IMediaContentProvider), Order = 2)]
-    [Kooboo.CMS.Common.Runtime.Dependency.Dependency(typeof(IContentProvider<MediaContent>), Order = 2)]
+    [Dependency(typeof(IMediaContentProvider), Order = 2)]
+    [Dependency(typeof(IContentProvider<MediaContent>), Order = 2)]
     public class MediaContentProvider : IMediaContentProvider
     {
-        private readonly OssClient ossClient;
-        private readonly string bucket;
-
-        public MediaContentProvider()
+        private ICosFileService _fileService;
+        private ICosFolderService _folderService;
+        private ICosAccountService _accountService;
+        public MediaContentProvider(
+            ICosFileService fileService,
+            ICosFolderService folderService,
+            ICosAccountService accountService)
         {
-            var account = OssAccountHelper.GetOssClientBucket(Repository.Current);
-            ossClient = account.Item1;
-            bucket = account.Item2;
+            _fileService = fileService;
+            _folderService = folderService;
+            _accountService = accountService;
         }
 
         #region IMediaContentProvider
         public void Add(MediaContent content, bool overrided)
         {
             var repository = content.GetRepository();
-            var account = OssAccountHelper.GetOssClientBucket(repository);
-
             if (content.ContentFile != null)
             {
                 content.FileName = content.ContentFile.FileName;
                 content.UserKey = content.FileName;
                 content.UUID = content.FileName;
-
-                var key = content.GetMediaBlobPath();
-                if (!overrided)
-                {
-                    if (account.Item1.DoesObjectExist(bucket, key))
-                    {
-                        return;
-                    }
-                }
-                var metaData = content.GetBlobMetadata();
-                var result = account.Item1.PutObject(bucket, key, content.ContentFile.Stream, metaData);
-                content.VirtualPath = OssAccountHelper.GetUrl(repository, key);
+                var result = _fileService.Create(content.FileName, repository.Name, content.ContentFile.Stream, overrided);
+                content.VirtualPath = _accountService.ResourceUrl(repository.Name, result.data.source_url);
             }
         }
 
         public void Move(MediaFolder sourceFolder, string oldFileName, MediaFolder targetFolder, string newFileName)
         {
-            var oldMediaContent = new MediaContent() { Repository = sourceFolder.Repository.Name, FolderName = sourceFolder.FullName, UUID = oldFileName, FileName = oldFileName };
-            var newMediaContent = new MediaContent() { Repository = targetFolder.Repository.Name, FolderName = targetFolder.FullName, UUID = newFileName, FileName = newFileName };
+            var oldMediaContent = new MediaContent()
+            {
+                Repository = sourceFolder.Repository.Name,
+                FolderName = sourceFolder.FullName,
+                UUID = oldFileName,
+                FileName = oldFileName
+            };
+            var newMediaContent = new MediaContent()
+            {
+                Repository = targetFolder.Repository.Name,
+                FolderName = targetFolder.FullName,
+                UUID = newFileName,
+                FileName = newFileName
+            };
 
             MoveContent(oldMediaContent, newMediaContent);
         }
@@ -312,21 +309,7 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS
             var oldKey = oldMediaContent.GetMediaBlobPath();
             var newKey = newMediaContent.GetMediaBlobPath();
 
-            if (ossClient.DoesObjectExist(bucket, oldKey)
-                && !ossClient.DoesObjectExist(bucket, newKey))
-            {
-                var oldContentBlob = ossClient.GetObject(bucket, oldKey);
-                try
-                {
-                    var result = ossClient.CopyObject(new CopyObjectRequest(bucket, oldKey, bucket, newKey));
-                }
-                catch (Exception e)
-                {
-                    Add(newMediaContent, true);
-                    Kooboo.HealthMonitoring.Log.LogException(e);
-                }
-                ossClient.DeleteObject(bucket, oldKey);
-            }
+            _fileService.Move(oldKey, oldMediaContent.Repository, newKey, newMediaContent.Repository);
         }
 
         public void Add(MediaContent content)
@@ -348,18 +331,13 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS
 
         public void Delete(MediaContent content)
         {
-            ossClient.DeleteObject(content.Repository.ToLower(), content.GetMediaBlobPath());
+            var key = content.GetMediaBlobPath();
+            _fileService.Delete(key, content.Repository);
         }
 
         public void Delete(MediaFolder mediaFolder)
         {
-            var prefix = mediaFolder.GetMediaDirectoryPath();
-            var blobs = ossClient.ListObjects(bucket, prefix);
-            var keys = blobs.ObjectSummaries.Select(it => it.Key);
-            if (keys.Any())
-            {
-                ossClient.DeleteObjects(new DeleteObjectsRequest(bucket, keys.ToList(), true));
-            }
+            _folderService.Delete(mediaFolder.FullName, mediaFolder.Repository.Name);
         }
 
         public object Execute(IContentQuery<MediaContent> query)
@@ -368,7 +346,12 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS
 
             QueryExpressionTranslator translator = new QueryExpressionTranslator();
 
-            var blobs = translator.Translate(query.Expression, ossClient, mediaQuery.MediaFolder)
+            var blobs = translator.Translate(
+                query.Expression,
+                mediaQuery.MediaFolder,
+                _folderService,
+                _fileService,
+                _accountService)
                 .Where(it => it != null);
 
             foreach (var item in translator.OrderFields)
@@ -405,7 +388,8 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS
 
         public void InitializeMediaContents(Repository repository)
         {
-            MediaBlobHelper.InitializeRepositoryContainer(repository);
+            //TODO: fix this
+            //MediaBlobHelper.InitializeRepositoryContainer(repository);
 
             Default.MediaFolderProvider fileMediaFolderProvider = new Default.MediaFolderProvider();
             foreach (var item in fileMediaFolderProvider.All(repository))
@@ -416,10 +400,12 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS
 
         private void ImportMediaFolderDataCascading(MediaFolder mediaFolder)
         {
-            Default.MediaContentProvider fileProvider = Kooboo.CMS.Common.Runtime.EngineContext.Current.Resolve<Kooboo.CMS.Content.Persistence.Default.MediaContentProvider>();
+            Default.MediaContentProvider fileProvider = EngineContext.Current.Resolve<Default.MediaContentProvider>();
 
             //add media folder
-            MediaFolderProvider folderProvider = new MediaFolderProvider();
+            MediaFolderProvider folderProvider = new MediaFolderProvider(_accountService,
+                _folderService,
+                _fileService);
             folderProvider.Add(mediaFolder);
 
             foreach (var item in fileProvider.All(mediaFolder))
@@ -440,17 +426,12 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS
 
         public byte[] GetContentStream(MediaContent content)
         {
-            var path = string.Empty;
-            if (string.IsNullOrEmpty(content.Repository))
+            var pathRepository = MediaPathUtility.GetPathRepository(content.Url);
+            var detail = _fileService.Get(pathRepository.Key, pathRepository.Value);
+            using (var webclient = new WebClient())
             {
-                var uri = new Uri(content.VirtualPath, UriKind.RelativeOrAbsolute);
-                path = uri.LocalPath.Trim('/');
+                return webclient.DownloadData(detail.data.source_url);
             }
-            else
-            {
-                path = content.GetMediaBlobPath();
-            }
-            return ossClient.GetObjectData(bucket, path);
         }
 
         public void SaveContentStream(MediaContent content, Stream stream)
