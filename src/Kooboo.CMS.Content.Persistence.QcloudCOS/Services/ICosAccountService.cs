@@ -11,6 +11,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
     public interface ICosAccountService
     {
         CosAccount Get(string repository);
+        string ResourceUrl(string repository, string url);
     }
 
     [Dependency(typeof(ICosAccountService))]

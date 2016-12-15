@@ -15,11 +15,11 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
 {
     public interface ICosFileService
     {
-        CreateFile Create(string path, string repository, Stream stream);
+        CreateFile Create(string path, string repository, Stream stream, bool overwrite = true);
 
         FileDetail Get(string path, string repository);
 
-        ListFile List(string path, string repository);
+        ListFile List(string path, string repository, int count = 100);
 
         MoveFile Move(string oldPath, string oldRepository, string newPath, string newRepository = null);
 
@@ -52,9 +52,12 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
             return _request.Get<FileDetail, FileDetailRequest, FileDetailData>(request, context);
         }
 
-        public ListFile List(string path, string repository)
+        public ListFile List(string path, string repository, int count = 100)
         {
-            var request = new ListFileRequest();
+            var request = new ListFileRequest
+            {
+                num = count
+            };
             var context = new RequestContext
             {
                 remotePath = MediaPathUtility.FolderPath(path, repository),
@@ -125,7 +128,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
             return _request.Post<UpdateFile, UpdateFileRequest, string>(request, context);
         }
 
-        public CreateFile Create(string path, string repository, Stream stream)
+        public CreateFile Create(string path, string repository, Stream stream, bool overwrite = true)
         {
             var context = new RequestContext
             {
@@ -141,7 +144,8 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
             {
                 biz_attr = customHeaders.ToJSON(),
                 filecontent = stream.ReadData(),
-                sha = SHA1Utility.GetFileSHA1(stream)
+                sha = SHA1Utility.GetFileSHA1(stream),
+                insertOnly = overwrite ? 0 : 1
             };
             var account = _accountService.Get(repository);
             context.Sign(account);

@@ -18,6 +18,7 @@ using Kooboo.CMS.Content.Query.Translator;
 using Kooboo.CMS.Common.Runtime.Dependency;
 using Kooboo.CMS.Common.Runtime;
 using Kooboo.CMS.Content.Persistence.QcloudCOS.Services;
+using Kooboo.CMS.Content.Persistence.QcloudCOS.Extensions;
 
 namespace Kooboo.CMS.Content.Persistence.QcloudCOS
 {
@@ -30,21 +31,23 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS
         string fileName = null;
         string prefix = null;
 
-        public IEnumerable<MediaContent> Translate(IExpression expression, CosClient ossClient, MediaFolder mediaFolder)
+        public IEnumerable<MediaContent> Translate(IExpression expression,
+             MediaFolder mediaFolder,
+             ICosFolderService folderService,
+             ICosFileService fileService,
+             ICosAccountService accountService)
         {
-            var account = OssAccountHelper.GetOssClientBucket(mediaFolder.Repository);
             this.Visite(expression);
-            var key = mediaFolder.GetMediaFolderItemPath(fileName);
             if (!string.IsNullOrEmpty(fileName))
             {
-                if (!ossClient.DoesObjectExist(account.Item2, key))
+                var blob = fileService.Get(fileName, mediaFolder.Repository.Name);
+                if (blob.code != 0)
                 {
                     return Enumerable.Empty<MediaContent>();
                 }
-                var blob = ossClient.GetObject(account.Item2, key);
                 return new[] { blob.BlobToMediaContent(
                     new MediaContent(mediaFolder.Repository.Name, mediaFolder.FullName),
-                    ossClient)
+                    accountService)
                 };
             }
             else
@@ -68,7 +71,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS
                 {
                     blobPrefix += "/";
                 }
-
+                var list = fileService.List(mediaFolder.FullName, mediaFolder.Repository.Name, take);
                 return ossClient
                     .ListObjects(account.Item2, blobPrefix)
                     .ObjectSummaries
@@ -103,16 +106,16 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS
         }
         private void ValidExpression(string fieldName)
         {
-            //if (!fieldName.EqualsOrNullEmpty("FileName", StringComparison.OrdinalIgnoreCase)
-            //    && !fieldName.EqualsOrNullEmpty("UUID", StringComparison.OrdinalIgnoreCase)
-            //    && !fieldName.EqualsOrNullEmpty("UserKey", StringComparison.OrdinalIgnoreCase))
-            //{      
-            //    //throw new NotSupportedException("The azure storage provider only support query by FileName,UUID,UserKey.");
-            //}      
-            //if (!string.IsNullOrEmpty(fileName) || !string.IsNullOrEmpty(prefix))
-            //{
-            //    throw new NotSupportedException("The azure storage provider only support query by one condition.");
-            //}
+            if (!fieldName.EqualsOrNullEmpty("FileName", StringComparison.OrdinalIgnoreCase)
+                && !fieldName.EqualsOrNullEmpty("UUID", StringComparison.OrdinalIgnoreCase)
+                && !fieldName.EqualsOrNullEmpty("UserKey", StringComparison.OrdinalIgnoreCase))
+            {
+                //throw new NotSupportedException("The azure storage provider only support query by FileName,UUID,UserKey.");
+            }
+            if (!string.IsNullOrEmpty(fileName) || !string.IsNullOrEmpty(prefix))
+            {
+                throw new NotSupportedException("The azure storage provider only support query by one condition.");
+            }
         }
         protected override void VisitWhereStartsWith(WhereStartsWithExpression expression)
         {
@@ -265,10 +268,15 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS
     public class MediaContentProvider : IMediaContentProvider
     {
         private ICosFileService _fileService;
+        private ICosFolderService _folderService;
         private ICosAccountService _accountService;
-        public MediaContentProvider(ICosFileService fileService, ICosAccountService accountService)
+        public MediaContentProvider(
+            ICosFileService fileService,
+            ICosFolderService folderService,
+            ICosAccountService accountService)
         {
             _fileService = fileService;
+            _folderService = folderService;
             _accountService = accountService;
         }
 
@@ -276,31 +284,32 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS
         public void Add(MediaContent content, bool overrided)
         {
             var repository = content.GetRepository();
-            var account = OssAccountHelper.GetOssClientBucket(repository);
             if (content.ContentFile != null)
             {
                 content.FileName = content.ContentFile.FileName;
                 content.UserKey = content.FileName;
                 content.UUID = content.FileName;
-
-                var key = content.GetMediaBlobPath();
-                if (!overrided)
-                {
-                    if (account.Item1.DoesObjectExist(bucket, key))
-                    {
-                        return;
-                    }
-                }
-                var metaData = content.GetBlobMetadata();
-                var result = account.Item1.PutObject(bucket, key, content.ContentFile.Stream, metaData);
-                content.VirtualPath = OssAccountHelper.GetUrl(repository, key);
+                var result = _fileService.Create(content.FileName, repository.Name, content.ContentFile.Stream, overrided);
+                content.VirtualPath = _accountService.ResourceUrl(repository.Name, result.data.source_url);
             }
         }
 
         public void Move(MediaFolder sourceFolder, string oldFileName, MediaFolder targetFolder, string newFileName)
         {
-            var oldMediaContent = new MediaContent() { Repository = sourceFolder.Repository.Name, FolderName = sourceFolder.FullName, UUID = oldFileName, FileName = oldFileName };
-            var newMediaContent = new MediaContent() { Repository = targetFolder.Repository.Name, FolderName = targetFolder.FullName, UUID = newFileName, FileName = newFileName };
+            var oldMediaContent = new MediaContent()
+            {
+                Repository = sourceFolder.Repository.Name,
+                FolderName = sourceFolder.FullName,
+                UUID = oldFileName,
+                FileName = oldFileName
+            };
+            var newMediaContent = new MediaContent()
+            {
+                Repository = targetFolder.Repository.Name,
+                FolderName = targetFolder.FullName,
+                UUID = newFileName,
+                FileName = newFileName
+            };
 
             MoveContent(oldMediaContent, newMediaContent);
         }
@@ -310,21 +319,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS
             var oldKey = oldMediaContent.GetMediaBlobPath();
             var newKey = newMediaContent.GetMediaBlobPath();
 
-            if (ossClient.DoesObjectExist(bucket, oldKey)
-                && !ossClient.DoesObjectExist(bucket, newKey))
-            {
-                var oldContentBlob = ossClient.GetObject(bucket, oldKey);
-                try
-                {
-                    var result = ossClient.CopyObject(new CopyObjectRequest(bucket, oldKey, bucket, newKey));
-                }
-                catch (Exception e)
-                {
-                    Add(newMediaContent, true);
-                    Kooboo.HealthMonitoring.Log.LogException(e);
-                }
-                ossClient.DeleteObject(bucket, oldKey);
-            }
+            _fileService.Move(oldKey, oldMediaContent.Repository, newKey, newMediaContent.Repository);
         }
 
         public void Add(MediaContent content)
@@ -346,18 +341,13 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS
 
         public void Delete(MediaContent content)
         {
-            ossClient.DeleteObject(content.Repository.ToLower(), content.GetMediaBlobPath());
+            var key = content.GetMediaBlobPath();
+            _fileService.Delete(key, content.Repository);
         }
 
         public void Delete(MediaFolder mediaFolder)
         {
-            var prefix = mediaFolder.GetMediaDirectoryPath();
-            var blobs = ossClient.ListObjects(bucket, prefix);
-            var keys = blobs.ObjectSummaries.Select(it => it.Key);
-            if (keys.Any())
-            {
-                ossClient.DeleteObjects(new DeleteObjectsRequest(bucket, keys.ToList(), true));
-            }
+            _folderService.Delete(mediaFolder.FullName, mediaFolder.Repository.Name);
         }
 
         public object Execute(IContentQuery<MediaContent> query)
@@ -366,7 +356,10 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS
 
             QueryExpressionTranslator translator = new QueryExpressionTranslator();
 
-            var blobs = translator.Translate(query.Expression, ossClient, mediaQuery.MediaFolder)
+            var blobs = translator.Translate(
+                query.Expression,
+                mediaQuery.MediaFolder,
+                _folderService, _fileService)
                 .Where(it => it != null);
 
             foreach (var item in translator.OrderFields)
