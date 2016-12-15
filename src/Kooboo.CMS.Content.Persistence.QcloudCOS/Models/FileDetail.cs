@@ -15,15 +15,11 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Models
     {
     }
 
-    public class FileDetailData : FolderDetailData
+    public class FileDetailData : CosFileObject
     {
-        public int filesize { get; set; }
-
-        public string sha { get; set; }
-
-        public string access_url { get; set; }
-        public string source_url { get; set; }
-
-        public FileAuthority? authority { get; set; }
+        /// <summary>
+        /// 用户自定义头部
+        /// </summary>
+        public Dictionary<string, string> custom_headers { get; set; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
     }
 }

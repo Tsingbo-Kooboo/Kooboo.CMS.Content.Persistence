@@ -19,6 +19,8 @@ using Kooboo.CMS.Common.Runtime.Dependency;
 using Kooboo.CMS.Common.Runtime;
 using Kooboo.CMS.Content.Persistence.QcloudCOS.Services;
 using Kooboo.CMS.Content.Persistence.QcloudCOS.Extensions;
+using Kooboo.CMS.Content.Persistence.QcloudCOS.Utilities;
+using System.Net;
 
 namespace Kooboo.CMS.Content.Persistence.QcloudCOS
 {
@@ -65,23 +67,11 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS
                     skip = Skip.Value;
                     maxResult += skip;
                 }
-                var blobPrefix = mediaFolder.GetMediaFolderItemPath(prefix);
 
-                if (string.IsNullOrEmpty(prefix))
-                {
-                    blobPrefix += "/";
-                }
-                var list = fileService.List(mediaFolder.FullName, mediaFolder.Repository.Name, take);
-                return ossClient
-                    .ListObjects(account.Item2, blobPrefix)
-                    .ObjectSummaries
-                    .Where(it => !it.Key.Substring(blobPrefix.Length).Contains("/"))
-                    .Skip(skip)
-                    .Take(take)
-                    .Select(it => it.BlobToMediaContent(
-                        new MediaContent(mediaFolder.Repository.Name, mediaFolder.FullName),
-                        ossClient)
-                        );
+                return fileService.List(mediaFolder.FullName, mediaFolder.Repository.Name, take)
+                    .data.infos.Select(it => it.BlobToMediaContent(
+                    new MediaContent(mediaFolder.Repository.Name, mediaFolder.FullName),
+                    accountService));
             }
         }
 
@@ -359,7 +349,9 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS
             var blobs = translator.Translate(
                 query.Expression,
                 mediaQuery.MediaFolder,
-                _folderService, _fileService)
+                _folderService,
+                _fileService,
+                _accountService)
                 .Where(it => it != null);
 
             foreach (var item in translator.OrderFields)
@@ -411,7 +403,9 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS
             Default.MediaContentProvider fileProvider = EngineContext.Current.Resolve<Default.MediaContentProvider>();
 
             //add media folder
-            MediaFolderProvider folderProvider = new MediaFolderProvider();
+            MediaFolderProvider folderProvider = new MediaFolderProvider(_accountService,
+                _folderService,
+                _fileService);
             folderProvider.Add(mediaFolder);
 
             foreach (var item in fileProvider.All(mediaFolder))
@@ -432,17 +426,12 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS
 
         public byte[] GetContentStream(MediaContent content)
         {
-            var path = string.Empty;
-            if (string.IsNullOrEmpty(content.Repository))
+            var pathRepository = MediaPathUtility.GetPathRepository(content.Url);
+            var detail = _fileService.Get(pathRepository.Key, pathRepository.Value);
+            using (var webclient = new WebClient())
             {
-                var uri = new Uri(content.VirtualPath, UriKind.RelativeOrAbsolute);
-                path = uri.LocalPath.Trim('/');
+                return webclient.DownloadData(detail.data.source_url);
             }
-            else
-            {
-                path = content.GetMediaBlobPath();
-            }
-            return ossClient.GetObjectData(bucket, path);
         }
 
         public void SaveContentStream(MediaContent content, Stream stream)

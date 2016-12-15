@@ -138,7 +138,7 @@
     <Compile Include="Models\DeleteFile.cs" />
     <Compile Include="Models\DeleteFolder.cs" />
     <Compile Include="Models\FileDetail.cs" />
-    <Compile Include="Models\ListCosObject.cs" />
+    <Compile Include="Models\CosObjectViewModels.cs" />
     <Compile Include="Models\CreateFolder.cs" />
     <Compile Include="Models\EmptyResponse.cs" />
     <Compile Include="Models\FolderDetail.cs" />

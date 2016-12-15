@@ -19,7 +19,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Extensions
             return UrlUtility.Combine(content.FolderName, content.FileName);
         }
 
-        public static MediaContent BlobToMediaContent(this FileDetail blob, 
+        public static MediaContent BlobToMediaContent(this FileDetail blob,
             MediaContent source,
             ICosAccountService accountService)
         {
@@ -32,6 +32,22 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Extensions
             source.UUID = data.access_url;
             source.UserKey = pathRepository.Key;
             source.UserId = data.custom_headers.GetString("UserId");
+            return source;
+        }
+
+        public static MediaContent BlobToMediaContent(this CosFileData blob,
+          MediaContent source,
+          ICosAccountService accountService)
+        {
+            var data = blob;
+            var pathRepository = MediaPathUtility.GetPathRepository(data.source_url);
+            source.VirtualPath = accountService.ResourceUrl(pathRepository.Value, pathRepository.Key);
+            source.Size = data.filesize.GetValueOrDefault();
+            source.UtcCreationDate = data.ctime.ToUtcTime();
+            source.UtcLastModificationDate = data.mtime.ToUtcTime();
+            source.UUID = data.access_url;
+            source.UserKey = pathRepository.Key;
+            //source.UserId = data.custom_headers.GetString("UserId");
             return source;
         }
     }

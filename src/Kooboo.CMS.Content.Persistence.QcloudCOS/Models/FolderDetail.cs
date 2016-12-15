@@ -15,16 +15,11 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Models
     {
     }
 
-    public class FolderDetailData
+    public class FolderDetailData : CosFolderObject
     {
-        public string biz_attr { get; set; }
-
-        public string ctime { get; set; }
-
-        public string mtime { get; set; }
-
+        /// <summary>
+        /// 用户自定义头部
+        /// </summary>
         public Dictionary<string, string> custom_headers { get; set; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
-        public string name { get; set; }
     }
 }

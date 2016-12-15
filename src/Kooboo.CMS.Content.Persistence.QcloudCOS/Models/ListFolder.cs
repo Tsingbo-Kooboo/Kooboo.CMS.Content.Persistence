@@ -24,14 +24,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Models
         public IEnumerable<CosFolderData> infos { get; set; } = Enumerable.Empty<CosFolderData>();
     }
 
-    public class CosFolderData
+    public class CosFolderData: CosFolderObject
     {
-        public string biz_attr { get; set; }
-
-        public string ctime { get; set; }
-
-        public string mtime { get; set; }
-
-        public string name { get; set; }
     }
 }
