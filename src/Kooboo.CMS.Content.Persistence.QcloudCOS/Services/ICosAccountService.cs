@@ -1,5 +1,6 @@
 ﻿using Kooboo.CMS.Common.Runtime.Dependency;
 using Kooboo.CMS.Content.Persistence.QcloudCOS.Models;
+using Kooboo.Web.Url;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -52,8 +53,12 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Services
         {
             var account = Get(repository);
             var customUri = new Uri(account.CustomDomain, UriKind.Absolute);
-            var uri = new Uri(url, UriKind.RelativeOrAbsolute);
-            var newUri = new UriBuilder(customUri.Scheme, customUri.Host, customUri.Port, uri.LocalPath);
+            var path = url;
+            if (UrlUtility.IsAbsoluteUrl(url))
+            {
+                path = new Uri(url, UriKind.Absolute).LocalPath;
+            }
+            var newUri = new UriBuilder(customUri.Scheme, customUri.Host, customUri.Port, path);
             return newUri.Uri.AbsoluteUri;
         }
     }

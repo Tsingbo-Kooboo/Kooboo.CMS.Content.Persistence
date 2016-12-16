@@ -20,7 +20,7 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Extensions
             long t;
             if (long.TryParse(time, out t))
             {
-                return MinTime.AddMilliseconds(t);
+                return MinTime.AddSeconds(t);
             }
             return MinTime;
         }

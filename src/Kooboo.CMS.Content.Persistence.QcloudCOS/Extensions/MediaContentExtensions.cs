@@ -6,6 +6,7 @@ using Kooboo.CMS.Content.Persistence.QcloudCOS.Utilities;
 using Kooboo.Web.Url;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -25,13 +26,15 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Extensions
         {
             var data = blob.data;
             var pathRepository = MediaPathUtility.GetPathRepository(data.source_url);
-            source.VirtualPath = accountService.ResourceUrl(pathRepository.Value, pathRepository.Key);
+            var filePath = MediaPathUtility.FilePath(pathRepository.Key, pathRepository.Value);
+            source.VirtualPath = accountService.ResourceUrl(pathRepository.Value, filePath);
+            source.FileName = Path.GetFileName(filePath);
+            source.UUID = source.FileName;
+            source.UserKey = source.FileName;
             source.Size = data.filesize;
             source.UtcCreationDate = data.ctime.ToUtcTime();
             source.UtcLastModificationDate = data.mtime.ToUtcTime();
-            source.UUID = data.access_url;
-            source.UserKey = pathRepository.Key;
-            source.UserId = data.custom_headers.GetString("UserId");
+            source.UserId = data.custom_headers.GetValueOrDefault("UserId");
             return source;
         }
 
@@ -41,13 +44,31 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Extensions
         {
             var data = blob;
             var pathRepository = MediaPathUtility.GetPathRepository(data.source_url);
-            source.VirtualPath = accountService.ResourceUrl(pathRepository.Value, pathRepository.Key);
+            var filePath = MediaPathUtility.FilePath(pathRepository.Key, pathRepository.Value);
+            source.VirtualPath = accountService.ResourceUrl(pathRepository.Value, filePath);
+            source.FileName = Path.GetFileName(filePath);
+            source.UUID = source.FileName;
+            source.UserKey = source.FileName;
             source.Size = data.filesize.GetValueOrDefault();
             source.UtcCreationDate = data.ctime.ToUtcTime();
             source.UtcLastModificationDate = data.mtime.ToUtcTime();
-            source.UUID = data.access_url;
-            source.UserKey = pathRepository.Key;
-            //source.UserId = data.custom_headers.GetString("UserId");
+            return source;
+        }
+
+        public static MediaContent BlobToMediaContent(this CosFileObject blob,
+         MediaContent source,
+         ICosAccountService accountService)
+        {
+            var data = blob;
+            var pathRepository = MediaPathUtility.GetPathRepository(data.source_url);
+            var filePath = MediaPathUtility.FilePath(pathRepository.Key, pathRepository.Value);
+            source.VirtualPath = accountService.ResourceUrl(pathRepository.Value, filePath);
+            source.FileName = Path.GetFileName(filePath);
+            source.UUID = source.FileName;
+            source.UserKey = source.FileName;
+            source.Size = data.filesize;
+            source.UtcCreationDate = data.ctime.ToUtcTime();
+            source.UtcLastModificationDate = data.mtime.ToUtcTime();
             return source;
         }
     }
