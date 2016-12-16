@@ -130,8 +130,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Extensions\MediaContentExtensions.cs" />
     <Compile Include="Models\AliyunAccountSettings.cs" />
     <Compile Include="Controllers\AliyunResourceController.cs" />
+    <Compile Include="Models\KoobooMediaInfo.cs" />
+    <Compile Include="Models\OSSAccount.cs" />
     <Compile Include="OssAccountHelper.cs" />
     <Compile Include="DependencyRegistrar.cs" />
     <Compile Include="Extensions\DictionaryExtensions.cs" />
@@ -143,9 +146,13 @@
     <Compile Include="MediaFolders.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RepositoryProvider.cs" />
+    <Compile Include="Services\IAccountService.cs" />
+    <Compile Include="Services\IMediaFileService.cs" />
+    <Compile Include="Services\IMediaFolderService.cs" />
     <Compile Include="StorageNamesEncoder.cs" />
     <Compile Include="TextContentBlobHelper.cs" />
     <Compile Include="TextContentFileProvider.cs" />
+    <Compile Include="Utilities\MediaPathUtility.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Ionic.Zip.xml" />
