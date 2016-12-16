@@ -23,6 +23,7 @@ using Kooboo.CMS.Content.Caching;
 using Kooboo.CMS.Caching;
 using Kooboo.IO;
 using Aliyun.OSS;
+using Kooboo.CMS.Content.Persistence.AliyunOSS.Services;
 
 namespace Kooboo.CMS.Content.Persistence.AliyunOSS
 {
@@ -30,10 +31,15 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS
     [Kooboo.CMS.Common.Runtime.Dependency.Dependency(typeof(IProvider<MediaFolder>), Order = 2)]
     public class MediaFolderProvider : IMediaFolderProvider
     {
+        private readonly IAccountService _accountService;
+        private readonly IMediaFolderService _folderService;
         private readonly string bucket;
         private readonly OssClient ossClient;
-        public MediaFolderProvider()
+        public MediaFolderProvider(IAccountService accountService,
+            IMediaFolderService folderService)
         {
+            _accountService = accountService;
+            _folderService = folderService;
             var account = OssAccountHelper.GetOssClientBucket(Repository.Current);
             ossClient = account.Item1;
             bucket = account.Item2;
@@ -41,42 +47,51 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS
 
         public IQueryable<MediaFolder> ChildFolders(MediaFolder parent)
         {
-            return MediaFolders.ChildFolders(parent).AsQueryable();
+            return _folderService
+                .List(parent.FullName, parent.Repository.Name)
+                .AsQueryable();
         }
 
         public IEnumerable<MediaFolder> All(Repository repository)
         {
-            return MediaFolders.RootFolders(repository).AsQueryable();
+            return _folderService
+                .List("/", repository.Name);
         }
 
         public MediaFolder Get(MediaFolder dummy)
         {
-            return MediaFolders.GetFolder(dummy);
+            return _folderService
+                .Get(dummy.FullName, dummy.Repository.Name);
         }
 
         public void Add(MediaFolder item)
         {
-            MediaFolders.AddFolder(item);
+            _folderService.Create(item.FullName, item.Repository.Name);
         }
 
         public void Update(MediaFolder @new, MediaFolder old)
         {
-            MediaFolders.UpdateFolder(@new);
+            throw new NotImplementedException();
         }
 
         public void Remove(MediaFolder item)
         {
-            MediaFolders.RemoveFolder(item);
+            _folderService.Delete(item.FullName, item.Repository.Name);
             (new MediaContentProvider()).Delete(item);
         }
 
 
-        public void Export(Repository repository, IEnumerable<MediaFolder> models, System.IO.Stream outputStream)
+        public void Export(Repository repository,
+            IEnumerable<MediaFolder> models,
+            Stream outputStream)
         {
             throw new NotImplementedException();
         }
 
-        public void Import(Repository repository, MediaFolder folder, Stream zipStream, bool @override)
+        public void Import(Repository repository, 
+            MediaFolder folder, 
+            Stream zipStream, 
+            bool @override)
         {
             using (ZipFile zipFile = ZipFile.Read(zipStream))
             {

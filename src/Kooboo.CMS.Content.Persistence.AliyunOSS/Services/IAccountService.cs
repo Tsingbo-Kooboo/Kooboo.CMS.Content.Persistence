@@ -36,7 +36,7 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS.Services
             var account = AliyunAccountSettings.Instance;
             var result = new OSSAccount
             {
-                BucketName = account.BucketName,
+                BucketName = account.BucketName.ToLower(),
                 Endpoint = account.Endpoint,
                 AccessKeyId = account.AccessKeyId,
                 AccessKeySecret = account.AccessKeySecret,

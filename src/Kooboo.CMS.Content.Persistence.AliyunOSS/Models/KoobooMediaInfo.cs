@@ -14,7 +14,7 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS.Models
         {
             if (!UrlUtility.IsAbsoluteUrl(url))
             {
-                throw new ArgumentOutOfRangeException(nameof(url), $"{nameof(url)} should be an absolute url");
+                url = UrlUtility.ToHttpAbsolute("http://www.kooboo.com", url);
             }
             var uri = new Uri(url);
             var absolutePath = uri.AbsolutePath;
@@ -33,5 +33,26 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS.Models
         public string Repository { get; private set; }
 
         public string FilePath { get; private set; }
+    }
+
+    public class KoobooMediaFolderInfo
+    {
+        public KoobooMediaFolderInfo(string key)
+        {
+            if (!UrlUtility.IsAbsoluteUrl(key))
+            {
+                key = UrlUtility.ToHttpAbsolute("http://www.kooboo.com", key);
+            }
+            var uri = new Uri(key);
+            var absolutePath = uri.AbsolutePath;
+            Repository = uri.Segments[1].Trim('/');
+            var segments = uri.Segments.Skip(3).ToArray();
+            var path = UrlUtility.Combine(segments);
+            Folder = path.Trim('/');
+        }
+
+        public string Folder { get; private set; }
+
+        public string Repository { get; private set; }
     }
 }
