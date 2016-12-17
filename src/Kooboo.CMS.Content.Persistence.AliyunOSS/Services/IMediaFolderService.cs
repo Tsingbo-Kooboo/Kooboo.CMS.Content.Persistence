@@ -1,5 +1,6 @@
 ﻿using Aliyun.OSS;
 using Kooboo.CMS.Caching;
+using Kooboo.CMS.Common.Persistence.Non_Relational;
 using Kooboo.CMS.Common.Runtime.Dependency;
 using Kooboo.CMS.Content.Caching;
 using Kooboo.CMS.Content.Models;
@@ -91,6 +92,7 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS.Services
 
         public IEnumerable<MediaFolder> List(string parentFolder, string repository)
         {
+            parentFolder = parentFolder.Replace('~', '/');
             return CacheUtility.GetOrAdd(parentFolder, repository, () =>
             {
                 string bucketName;
@@ -102,7 +104,7 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS.Services
                     Prefix = key
                 });
                 var summaries = objects.ObjectSummaries;
-                return objects
+                var res = objects
                     .CommonPrefixes
                     .Select(it =>
                     {
@@ -111,8 +113,10 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS.Services
                         return new MediaFolder(new Repository(repository), info.Folder)
                         {
                             UtcCreationDate = m == null ? DateTime.UtcNow : m.LastModified.ToUniversalTime()
-                        };
-                    });
+                        }.AsActual();
+                    }).Where(it => it != null);
+
+                return res;
             });
         }
 

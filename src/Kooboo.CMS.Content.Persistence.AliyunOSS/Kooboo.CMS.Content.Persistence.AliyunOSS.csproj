@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{5651065F-09A0-4445-B97F-4F782F5B4172}</ProjectGuid>
+    <ProjectGuid>{469A343A-A0E2-4197-8BA0-5008A6694C0A}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Kooboo.CMS.Content.Persistence.AliyunOSS</RootNamespace>

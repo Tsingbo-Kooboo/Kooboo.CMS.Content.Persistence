@@ -26,11 +26,12 @@ using Aliyun.OSS;
 using Kooboo.CMS.Content.Persistence.AliyunOSS.Services;
 using Kooboo.CMS.Content.Persistence.AliyunOSS.Utilities;
 using Kooboo.CMS.Content.Persistence.AliyunOSS.Models;
+using Kooboo.CMS.Common.Runtime.Dependency;
 
 namespace Kooboo.CMS.Content.Persistence.AliyunOSS
 {
-    [Kooboo.CMS.Common.Runtime.Dependency.Dependency(typeof(IMediaFolderProvider), Order = 2)]
-    [Kooboo.CMS.Common.Runtime.Dependency.Dependency(typeof(IProvider<MediaFolder>), Order = 2)]
+    [Dependency(typeof(IMediaFolderProvider), Order = 10)]
+    [Dependency(typeof(IProvider<MediaFolder>), Order = 10)]
     public class MediaFolderProvider : IMediaFolderProvider
     {
         private readonly IAccountService _accountService;
@@ -55,7 +56,8 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS
         public IEnumerable<MediaFolder> All(Repository repository)
         {
             return _folderService
-                .List("/", repository.Name);
+                .List("/", repository.Name)
+                .Where(it => it != null);
         }
 
         public MediaFolder Get(MediaFolder dummy)
