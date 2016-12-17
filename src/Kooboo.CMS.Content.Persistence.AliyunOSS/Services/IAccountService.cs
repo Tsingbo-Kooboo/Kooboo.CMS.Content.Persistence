@@ -27,10 +27,18 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS.Services
         /// <param name="repository"></param>
         /// <returns></returns>
         string ResolveUrl(string path, string repository);
+
+        string AbsoluteUrl(string key, string repository);
     }
     [Dependency(typeof(IAccountService))]
     public class AccountService : IAccountService
     {
+        public string AbsoluteUrl(string key, string repository)
+        {
+            var account = Get(repository);
+            return UrlUtility.ToHttpAbsolute(account.CustomDomain, key);
+        }
+
         public OSSAccount Get(string repository)
         {
             var account = AliyunAccountSettings.Instance;

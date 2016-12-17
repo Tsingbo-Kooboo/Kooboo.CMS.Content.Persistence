@@ -35,6 +35,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Aliyun.OSS, Version=2.4.0.0, Culture=neutral, PublicKeyToken=0ad4175f0dac0b9b, processorArchitecture=MSIL">
+      <HintPath>..\packages\Aliyun.OSS.SDK.2.4.0\lib\Aliyun.OSS.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Kooboo, Version=4.5.0.1116, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Kooboo.Core.4.5.0.1116\lib\Kooboo.dll</HintPath>
       <Private>True</Private>

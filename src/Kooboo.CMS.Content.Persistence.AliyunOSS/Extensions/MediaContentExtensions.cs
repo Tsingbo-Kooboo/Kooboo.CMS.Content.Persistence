@@ -2,6 +2,8 @@
 using Kooboo.CMS.Content.Models;
 using Kooboo.CMS.Content.Persistence.AliyunOSS.Models;
 using Kooboo.CMS.Content.Persistence.AliyunOSS.Services;
+using Kooboo.CMS.Content.Persistence.AliyunOSS.Utilities;
+using Kooboo.Web.Url;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,6 +35,21 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS.Extensions
                 mediaContent.Metadata = new MediaContentMetadata();
             }
             return mediaContent;
+        }
+
+        #region GetMediaBlobPath
+        public static string GetMediaPath(this MediaContent mediaContent)
+        {
+            var pathList = mediaContent.FolderName.Split('~').ToList();
+            pathList.Add(mediaContent.FileName);
+            return UrlUtility.Combine(pathList.ToArray());
+        }
+        #endregion
+
+        public static string GetOssKey(this MediaContent mediaContent)
+        {
+            var path = mediaContent.GetMediaPath();
+            return MediaPathUtility.FilePath(path, mediaContent.Repository);
         }
     }
 }

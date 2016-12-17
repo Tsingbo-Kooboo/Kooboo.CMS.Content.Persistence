@@ -12,37 +12,41 @@ using System.Linq;
 using System.Text;
 using Aliyun.OSS;
 using Kooboo.CMS.Content.Models;
+using Kooboo.CMS.Common.Runtime.Dependency;
+using Kooboo.CMS.Content.Persistence.AliyunOSS.Services;
 
 namespace Kooboo.CMS.Content.Persistence.AliyunOSS
 {
-    [Kooboo.CMS.Common.Runtime.Dependency.Dependency(typeof(ITextContentFileProvider), Order = 2)]
+    [Dependency(typeof(ITextContentFileProvider), Order = 2)]
     public class TextContentFileProvider : ITextContentFileProvider
     {
-        private readonly string bucket;
-        private readonly OssClient ossClient;
-        public TextContentFileProvider()
+        private readonly IAccountService _accountService;
+        public TextContentFileProvider(IAccountService accountService)
         {
-            var account = OssAccountHelper.GetOssClientBucket(Repository.Current);
-            ossClient = account.Item1;
-            bucket = account.Item2;
+            _accountService = accountService;
         }
 
         public string Save(TextContent content, ContentFile file)
         {
             var key = content.GetTextContentFilePath(file);
-            ossClient.PutObject(bucket, key, file.Stream);
-            return OssAccountHelper.GetUrl(content.GetRepository(), key);
+            string bucket;
+            var client = _accountService.GetClient(content.Repository, out bucket);
+            client.PutObject(bucket, key, file.Stream);
+            return _accountService.AbsoluteUrl(key, content.Repository);
         }
 
         public void DeleteFiles(TextContent content)
         {
+            string bucket;
+            var client = _accountService.GetClient(content.Repository, out bucket);
+
             var prefix = content.GetTextContentDirectoryPath();
-            var keys = ossClient.ListBlobsWithPrefix(bucket, prefix)
+            var keys = client.ListBlobsWithPrefix(bucket, prefix)
                 .ObjectSummaries
                 .Select(it => it.Key);
             if (keys != null && keys.Any())
             {
-                ossClient.DeleteObjects(new DeleteObjectsRequest(bucket, keys.ToList()));
+                client.DeleteObjects(new DeleteObjectsRequest(bucket, keys.ToList()));
             }
         }
     }

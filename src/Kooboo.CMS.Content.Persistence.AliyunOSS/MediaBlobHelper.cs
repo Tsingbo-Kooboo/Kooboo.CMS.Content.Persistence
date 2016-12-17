@@ -41,13 +41,6 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS
         }
         #endregion
 
-        #region GetMediaBlobPath
-        public static string GetMediaBlobPath(this MediaContent mediaContent)
-        {
-            return GetMediaFolderItemPath(mediaContent.GetFolder(), mediaContent.FileName);
-        }
-        #endregion
-
         #region MediaContentToBlob
         public static ObjectMetadata GetBlobMetadata(this MediaContent mediaContent)
         {

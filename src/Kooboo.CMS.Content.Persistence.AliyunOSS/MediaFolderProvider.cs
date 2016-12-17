@@ -24,6 +24,8 @@ using Kooboo.CMS.Caching;
 using Kooboo.IO;
 using Aliyun.OSS;
 using Kooboo.CMS.Content.Persistence.AliyunOSS.Services;
+using Kooboo.CMS.Content.Persistence.AliyunOSS.Utilities;
+using Kooboo.CMS.Content.Persistence.AliyunOSS.Models;
 
 namespace Kooboo.CMS.Content.Persistence.AliyunOSS
 {
@@ -32,17 +34,15 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS
     public class MediaFolderProvider : IMediaFolderProvider
     {
         private readonly IAccountService _accountService;
+        private readonly IMediaFileService _fileService;
         private readonly IMediaFolderService _folderService;
-        private readonly string bucket;
-        private readonly OssClient ossClient;
         public MediaFolderProvider(IAccountService accountService,
+            IMediaFileService fileService,
             IMediaFolderService folderService)
         {
             _accountService = accountService;
+            _fileService = fileService;
             _folderService = folderService;
-            var account = OssAccountHelper.GetOssClientBucket(Repository.Current);
-            ossClient = account.Item1;
-            bucket = account.Item2;
         }
 
         public IQueryable<MediaFolder> ChildFolders(MediaFolder parent)
@@ -77,7 +77,6 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS
         public void Remove(MediaFolder item)
         {
             _folderService.Delete(item.FullName, item.Repository.Name);
-            (new MediaContentProvider()).Delete(item);
         }
 
 
@@ -88,9 +87,9 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS
             throw new NotImplementedException();
         }
 
-        public void Import(Repository repository, 
-            MediaFolder folder, 
-            Stream zipStream, 
+        public void Import(Repository repository,
+            MediaFolder folder,
+            Stream zipStream,
             bool @override)
         {
             using (ZipFile zipFile = ZipFile.Read(zipStream))
@@ -135,21 +134,25 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS
 
         public void Rename(MediaFolder @new, MediaFolder old)
         {
-            MediaFolders.RenameFolder(@new, old);
-            var oldPrefix = old.GetMediaFolderItemPath(null) + "/";
-            var newPrefix = @new.GetMediaFolderItemPath(null) + "/";
-            MoveDirectory(ossClient, bucket, newPrefix, oldPrefix);
+            _folderService.Move(old, @new);
         }
 
 
-        public void Export(Repository repository, string baseFolder, string[] folders, string[] docs, Stream outputStream)
+        public void Export(Repository repository,
+            string baseFolder,
+            string[] folders,
+            string[] docs,
+            Stream outputStream)
         {
+            string bucket;
+            var ossClient = _accountService.GetClient(repository.Name, out bucket);
             ZipFile zipFile = new ZipFile();
-            var basePrefix = StorageNamesEncoder.EncodeContainerName(repository.Name) + "/" + MediaBlobHelper.MediaDirectoryName + "/";
+            var repositoryName = repository.Name;
+            var basePrefix = MediaPathUtility.FolderPath("/", repositoryName);
             if (!string.IsNullOrEmpty(baseFolder))
             {
                 var baseMediaFolder = ServiceFactory.MediaFolderManager.Get(repository, baseFolder);
-                basePrefix = baseMediaFolder.GetMediaFolderItemPath(null) + "/";
+                basePrefix = MediaPathUtility.FolderPath(baseMediaFolder.FullName, repositoryName);
             }
 
             //add file
@@ -157,9 +160,13 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS
             {
                 foreach (var doc in docs)
                 {
-                    var key = basePrefix + StorageNamesEncoder.EncodeBlobName(doc);
-                    var bytes = ossClient.GetObjectData(bucket, key);
-                    zipFile.AddEntry(doc, bytes);
+                    var path = UrlUtility.Combine(basePrefix, doc);
+                    using (var stream = new MemoryStream())
+                    {
+                        ossClient.GetObject(new GetObjectRequest(bucket, path), stream);
+                        stream.Position = 0;
+                        zipFile.AddEntry(doc, stream.ReadData());
+                    }
                 }
             }
             //add folders
@@ -168,81 +175,77 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS
                 foreach (var folder in folders)
                 {
                     var folderName = folder.Split('~').LastOrDefault();
-                    zipFolder(ossClient, basePrefix, folderName, "", ref zipFile);
+                    zipFolder(repository, basePrefix, folderName, "", ref zipFile);
                 }
             }
             zipFile.Save(outputStream);
         }
 
-        private void zipFolder(OssClient ossClient, string basePrefix, string folderName, string zipDir, ref ZipFile zipFile)
+        private void zipFolder(
+            Repository repository,
+            string basePrefix,
+            string folderName,
+            string zipDir,
+            ref ZipFile zipFile)
         {
             zipDir = string.IsNullOrEmpty(zipDir) ? folderName : zipDir + "/" + folderName;
             zipFile.AddDirectoryByName(zipDir);
-            var folderPrefix = basePrefix + StorageNamesEncoder.EncodeBlobName(folderName) + "/";
-
+            var folderPrefix = UrlUtility.Combine(basePrefix, folderName).Trim('/') + "/";
+            string bucket;
+            var ossClient = _accountService.GetClient(repository.Name, out bucket);
             var blobs = ossClient.ListBlobsWithPrefix(bucket, folderPrefix);
+            var len = folderPrefix.Length;
             foreach (var blob in blobs.ObjectSummaries)
             {
                 if (blob.Key.EndsWith("/"))
                 {
                     continue;
                 }
-                var bytes = ossClient.GetObjectData(bucket, blob.Key);
-                if (bytes.Length > 0)
+                using (var stream = new MemoryStream())
                 {
-                    zipFile.AddEntry(zipDir + "/" + blob.Key, bytes);
+                    ossClient.GetObject(new GetObjectRequest(bucket, blob.Key), stream);
+                    stream.Position = 0;
+                    var bytes = stream.ReadData();
+                    if (bytes.Length > 0)
+                    {
+                        var key = UrlUtility.Combine(zipDir, blob.Key.Substring(len));
+                        zipFile.AddEntry(key, bytes);
+                    }
                 }
-            }
-        }
-        private void MoveContent(string oldKey, string newKey)
-        {
-            if (ossClient.DoesObjectExist(bucket, oldKey)
-                && !ossClient.DoesObjectExist(bucket, newKey))
-            {
-                var oldContentBlob = ossClient.GetObject(bucket, oldKey);
-                try
-                {
-                    var result = ossClient.CopyObject(new CopyObjectRequest(bucket, oldKey, bucket, newKey));
-                }
-                catch (Exception e)
-                {
-                    ossClient.PutObject(bucket, newKey, oldContentBlob.Content);
-                    Kooboo.HealthMonitoring.Log.LogException(e);
-                }
-                ossClient.DeleteObject(bucket, oldKey);
             }
         }
 
+
         private void MoveDirectory(OssClient ossClient, string bucket, string newPrefix, string oldPrefix)
         {
-            var blobs = ossClient.ListBlobsWithPrefix(bucket, oldPrefix);
-            foreach (var blob in blobs.ObjectSummaries)
-            {
-                if (blob.Key.EndsWith("/"))
-                {
-                    var names = blob.Key.Substring(bucket.Length).Split('/');
-                    for (var i = names.Length - 1; i >= 0; i--)
-                    {
-                        if (!string.IsNullOrEmpty(names[i]))
-                        {
-                            MoveDirectory(ossClient,
-                                bucket,
-                                $"{newPrefix}{ StorageNamesEncoder.EncodeBlobName(names[i])}/",
-                                $"{oldPrefix}{ StorageNamesEncoder.EncodeBlobName(names[i])}/");
-                            break;
-                        }
-                    }
-                }
-                else
-                {
-                    if (!ossClient.DoesObjectExist(bucket, blob.Key))
-                    {
-                        continue;
-                    }
-                    var newKey = UrlUtility.Combine(newPrefix, blob.Key.Substring(oldPrefix.Length));
-                    MoveContent(blob.Key, newKey);
-                }
-            }
+            //var blobs = ossClient.ListBlobsWithPrefix(bucket, oldPrefix);
+            //foreach (var blob in blobs.ObjectSummaries)
+            //{
+            //    if (blob.Key.EndsWith("/"))
+            //    {
+            //        var names = blob.Key.Substring(bucket.Length).Split('/');
+            //        for (var i = names.Length - 1; i >= 0; i--)
+            //        {
+            //            if (!string.IsNullOrEmpty(names[i]))
+            //            {
+            //                MoveDirectory(ossClient,
+            //                    bucket,
+            //                    $"{newPrefix}{ StorageNamesEncoder.EncodeBlobName(names[i])}/",
+            //                    $"{oldPrefix}{ StorageNamesEncoder.EncodeBlobName(names[i])}/");
+            //                break;
+            //            }
+            //        }
+            //    }
+            //    else
+            //    {
+            //        if (!ossClient.DoesObjectExist(bucket, blob.Key))
+            //        {
+            //            continue;
+            //        }
+            //        var newKey = UrlUtility.Combine(newPrefix, blob.Key.Substring(oldPrefix.Length));
+            //        MoveContent(blob.Key, newKey);
+            //    }
+            //}
         }
     }
 }

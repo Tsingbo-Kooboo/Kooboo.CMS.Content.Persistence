@@ -59,8 +59,10 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS.Services
                 }
             }
             var response = client.PutObject(bucketName, key, stream, meta);
+            CacheUtility.RemoveCache(path, repository);
             return new MediaContent(repository, folder)
             {
+                FileName = fileName,
                 VirtualPath = _accountService.ResolveUrl(path, repository),
                 ContentFile = new ContentFile
                 {
@@ -77,49 +79,56 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS.Services
             var client = _accountService.GetClient(repository, out bucketName);
             var key = MediaPathUtility.FilePath(path, repository);
             client.DeleteObject(bucketName, key);
+            CacheUtility.RemoveCache(path, repository);
         }
 
         public MediaContent Get(string path, string repository)
         {
-            string bucketName;
-            var fileName = Path.GetFileName(path);
-            var folderName = Path.GetDirectoryName(path);
-            var client = _accountService.GetClient(repository, out bucketName);
-            var key = MediaPathUtility.FilePath(path, repository);
-            var stream = new MemoryStream();
-            var metaData = client.GetObject(new GetObjectRequest(bucketName, key), stream);
-            var userMetaData = metaData.UserMetadata;
-            return new MediaContent(repository, folderName)
+            return CacheUtility.GetOrAdd(path, repository, () =>
             {
-                UtcLastModificationDate = metaData.LastModified.ToUniversalTime(),
-                UtcCreationDate = metaData.LastModified.ToUniversalTime(),
-                Metadata = new MediaContentMetadata
+                string bucketName;
+                var fileName = Path.GetFileName(path);
+                var folderName = Path.GetDirectoryName(path);
+                var client = _accountService.GetClient(repository, out bucketName);
+                var key = MediaPathUtility.FilePath(path, repository);
+                var stream = new MemoryStream();
+                var metaData = client.GetObject(new GetObjectRequest(bucketName, key), stream);
+                var userMetaData = metaData.UserMetadata;
+                return new MediaContent(repository, folderName)
                 {
-                    Title = userMetaData.GetValueOrDefault(ConstValues.Metadata.Title),
-                    AlternateText = userMetaData.GetValueOrDefault(ConstValues.Metadata.AlternateText),
-                    Description = userMetaData.GetValueOrDefault(ConstValues.Metadata.Description)
-                },
-                UserId = userMetaData.GetValueOrDefault(ConstValues.Metadata.UserId),
-                UserKey = fileName,
-                UUID = fileName,
-                Size = stream.Length,
-                VirtualPath = _accountService.ResolveUrl(path, repository),
-                ContentFile = new ContentFile
-                {
-                    FileName = fileName,
-                    Name = fileName,
-                    Stream = stream
-                }
-            };
+                    UtcLastModificationDate = metaData.LastModified.ToUniversalTime(),
+                    UtcCreationDate = metaData.LastModified.ToUniversalTime(),
+                    Metadata = new MediaContentMetadata
+                    {
+                        Title = userMetaData.GetValueOrDefault(ConstValues.Metadata.Title),
+                        AlternateText = userMetaData.GetValueOrDefault(ConstValues.Metadata.AlternateText),
+                        Description = userMetaData.GetValueOrDefault(ConstValues.Metadata.Description)
+                    },
+                    UserId = userMetaData.GetValueOrDefault(ConstValues.Metadata.UserId),
+                    UserKey = fileName,
+                    UUID = fileName,
+                    Size = stream.Length,
+                    VirtualPath = _accountService.ResolveUrl(path, repository),
+                    ContentFile = new ContentFile
+                    {
+                        FileName = fileName,
+                        Name = fileName,
+                        Stream = stream
+                    }
+                };
+            });
         }
 
         public IEnumerable<MediaContent> List(string folder, string repository, int count = 100)
         {
-            string bucketName;
-            var client = _accountService.GetClient(repository, out bucketName);
-            var folderPath = MediaPathUtility.FolderPath(folder, repository);
-            return client.ListBlobsInFolder(bucketName, folderPath)
-                .Select(it => it.ToMediaContent(_accountService));
+            return CacheUtility.GetOrAdd(folder, repository, () =>
+            {
+                string bucketName;
+                var client = _accountService.GetClient(repository, out bucketName);
+                var mediaFolder = new MediaFolder(new Repository(repository), folder);
+                return client.ListBlobsInFolder(bucketName, mediaFolder)
+                    .Select(it => it.ToMediaContent(_accountService));
+            });
         }
 
         public void Move(string oldPath, string oldRepository, string newPath, string newRepository = null)
@@ -130,11 +139,14 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS.Services
         public void Update(string path, string repository, Dictionary<string, string> headers)
         {
             string bucketName;
-            var fileName = Path.GetFileName(path);
-            var folderName = Path.GetDirectoryName(path);
+            var key = MediaPathUtility.FilePath(path, repository);
             var client = _accountService.GetClient(repository, out bucketName);
-            throw new NotImplementedException();
-            //client.PutObject(bucketName,"")
+            var meta = new ObjectMetadata();
+            foreach (var item in headers)
+            {
+                meta.AddHeader(item.Key, item.Value);
+            }
+            client.ModifyObjectMeta(bucketName, key, meta);
         }
     }
 }
