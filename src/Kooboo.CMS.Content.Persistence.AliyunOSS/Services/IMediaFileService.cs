@@ -17,7 +17,7 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS.Services
 {
     public interface IMediaFileService
     {
-        MediaContent Create(string path, string repository, Stream stream, Dictionary<string, string> metadata, bool overwrite = true);
+        void Create(string path, string repository, Stream stream, Dictionary<string, string> metadata, bool overwrite = true);
 
         MediaContent Get(string path, string repository);
 
@@ -39,7 +39,7 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS.Services
             _accountService = accountService;
         }
 
-        public MediaContent Create(string path,
+        public void Create(string path,
             string repository,
             Stream stream,
             Dictionary<string, string> metadata,
@@ -59,18 +59,7 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS.Services
                 }
             }
             var response = client.PutObject(bucketName, key, stream, meta);
-            CacheUtility.RemoveCache(path, repository);
-            return new MediaContent(repository, folder)
-            {
-                FileName = fileName,
-                VirtualPath = _accountService.ResolveUrl(path, repository),
-                ContentFile = new ContentFile
-                {
-                    FileName = fileName,
-                    Name = fileName,
-                    Stream = stream
-                }
-            };
+            CacheUtility.RemoveCache("Get" + path, repository);
         }
 
         public void Delete(string path, string repository)
@@ -79,12 +68,12 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS.Services
             var client = _accountService.GetClient(repository, out bucketName);
             var key = MediaPathUtility.FilePath(path, repository);
             client.DeleteObject(bucketName, key);
-            CacheUtility.RemoveCache(path, repository);
+            CacheUtility.RemoveCache("Get" + path, repository);
         }
 
         public MediaContent Get(string path, string repository)
         {
-            return CacheUtility.GetOrAdd(path, repository, () =>
+            return CacheUtility.GetOrAdd("Get" + path, repository, () =>
             {
                 string bucketName;
                 var fileName = Path.GetFileName(path);
@@ -121,7 +110,7 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS.Services
 
         public IEnumerable<MediaContent> List(string folder, string repository, int count = 100)
         {
-            return CacheUtility.GetOrAdd(folder, repository, () =>
+            return CacheUtility.GetOrAdd("List" + folder, repository, () =>
             {
                 string bucketName;
                 var client = _accountService.GetClient(repository, out bucketName);

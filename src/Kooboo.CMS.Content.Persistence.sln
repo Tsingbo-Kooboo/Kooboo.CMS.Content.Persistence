@@ -11,6 +11,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kooboo.CMS.Content.Persiste
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kooboo.CMS.Content.Persistence.AliyunOSSTests", "Kooboo.CMS.Content.Persistence.AliyunOSSTests\Kooboo.CMS.Content.Persistence.AliyunOSSTests.csproj", "{69D56DFE-1D84-43B0-9432-03FDA1E92602}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{09B5B971-1FFE-4471-B5B1-001D81210905}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kooboo.CMS.Content.Persistence.QiniuKodo", "Kooboo.CMS.Content.Persistence.QiniuKodo\Kooboo.CMS.Content.Persistence.QiniuKodo.csproj", "{3C8FCA85-365F-4C08-9FDE-CC25D09572FC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,8 +37,16 @@ Global
 		{69D56DFE-1D84-43B0-9432-03FDA1E92602}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{69D56DFE-1D84-43B0-9432-03FDA1E92602}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{69D56DFE-1D84-43B0-9432-03FDA1E92602}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3C8FCA85-365F-4C08-9FDE-CC25D09572FC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3C8FCA85-365F-4C08-9FDE-CC25D09572FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3C8FCA85-365F-4C08-9FDE-CC25D09572FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3C8FCA85-365F-4C08-9FDE-CC25D09572FC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{50B13327-B703-4ABF-A807-889D63474D6B} = {09B5B971-1FFE-4471-B5B1-001D81210905}
+		{69D56DFE-1D84-43B0-9432-03FDA1E92602} = {09B5B971-1FFE-4471-B5B1-001D81210905}
 	EndGlobalSection
 EndGlobal

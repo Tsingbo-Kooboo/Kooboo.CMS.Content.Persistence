@@ -42,10 +42,10 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS
             IAccountService accountService)
         {
             string bucket;
-            var client = accountService.GetClient(mediaFolder.Name, out bucket);
+            var repository = mediaFolder.Repository.Name;
+            var client = accountService.GetClient(repository, out bucket);
             this.Visite(expression);
             var key = mediaFolder.GetOssKey();
-            var repository = mediaFolder.Repository.Name;
             if (!string.IsNullOrEmpty(fileName))
             {
                 var fileKey = UrlUtility.Combine(mediaFolder.FullName, fileName);
@@ -78,7 +78,8 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS
                 return client.ListBlobsInFolder(bucket, mediaFolder)
                       .Skip(skip)
                       .Take(take)
-                      .Select(it => BlobToMediaContent(it, accountService));
+                      .Select(it => BlobToMediaContent(it, accountService))
+                      .ToArray();
             }
         }
         private MediaContent BlobToMediaContent(OssObject metaData, IAccountService accountService)
@@ -87,23 +88,29 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS
             var modifiedDate = metaData.Metadata.LastModified.ToUniversalTime();
             var url = accountService.ResolveUrl(info.FilePath, info.Repository);
             var fileName = info.FileName;
-
-            return new MediaContent(info.Repository, info.Folder)
+            var stream = metaData.Content;
+            using (var m = new MemoryStream())
             {
-                VirtualPath = url,
-                UtcLastModificationDate = modifiedDate,
-                UtcCreationDate = modifiedDate,
-                FileName = fileName,
-                UserKey = fileName,
-                UUID = fileName,
-                Size = metaData.Content.Length,
-                ContentFile = new ContentFile
+                stream.CopyTo(m);
+                m.Position = 0;
+                var bytes = m.ReadData();
+                return new MediaContent(info.Repository, info.Folder)
                 {
+                    VirtualPath = url,
+                    UtcLastModificationDate = modifiedDate,
+                    UtcCreationDate = modifiedDate,
                     FileName = fileName,
-                    Name = fileName,
-                    Stream = metaData.Content
-                }
-            };
+                    UserKey = fileName,
+                    UUID = fileName,
+                    Size = bytes.Length,
+                    ContentFile = new ContentFile
+                    {
+                        FileName = fileName,
+                        Name = fileName,
+                        Stream = stream
+                    }
+                };
+            }
         }
 
         private MediaContent BlobToMediaContent(OssObjectSummary metaData, IAccountService accountService)
