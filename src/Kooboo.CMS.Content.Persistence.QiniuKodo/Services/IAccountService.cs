@@ -11,16 +11,20 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Qiniu.Storage;
+using Kooboo.CMS.Content.Persistence.QiniuKodo;
 
 namespace Kooboo.CMS.Content.Persistence.QiniuKodo.Services
 {
 
     public interface IAccountService
     {
-        Mac Get(string repository);
+        KodoAccount Get(string repository);
 
-        T GetClient<T>(string repository, out string bucket);
+        Mac GetMac(string repository, out string bucket);
 
+        BucketManager GetBucketManager(string repository, out string bucket);
+
+        UploadManager GetUploadManager(string repository, out string token);
         /// <summary>
         /// 外网可访问的地址
         /// </summary>
@@ -40,10 +44,10 @@ namespace Kooboo.CMS.Content.Persistence.QiniuKodo.Services
             return UrlUtility.ToHttpAbsolute(account.CustomDomain, key);
         }
 
-        public Mac Get(string repository)
+        public KodoAccount Get(string repository)
         {
-            var account = AliyunAccountSettings.Instance;
-            var result = new OSSAccount
+            var account = QiniuAccountSettings.Instance;
+            var result = new KodoAccount
             {
                 BucketName = account.BucketName.ToLower(),
                 Endpoint = account.Endpoint,
@@ -68,13 +72,37 @@ namespace Kooboo.CMS.Content.Persistence.QiniuKodo.Services
             return result;
         }
 
-        public T GetClient<T>(string repository, out string bucket)
+        public BucketManager GetBucketManager(string repository, out string bucket)
+        {
+            var mac = GetMac(repository, out bucket);
+            return new BucketManager(mac);
+        }
+
+        public Mac GetMac(string repository, out string bucket)
         {
             var account = Get(repository);
             bucket = account.BucketName;
-            return new OssClient(account.Endpoint,
+            return new Mac(
                 account.AccessKeyId,
-                account.AccessKeySecret);
+                account.AccessKeySecret
+                );
+        }
+
+        public UploadManager GetUploadManager(string repository, out string token)
+        {
+            var account = Get(repository);
+            string bucket;
+            var mac = GetMac(repository, out bucket);
+            // 上传策略
+            PutPolicy putPolicy = new PutPolicy
+            {
+                Scope = bucket
+            };
+            // 上传策略的过期时间(单位:秒)
+            putPolicy.SetExpires(3600);
+            // 生成上传凭证
+            token = Auth.createUploadToken(putPolicy, mac);
+            return new UploadManager();
         }
 
         public string ResolveUrl(string path, string repository)

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Kooboo.CMS.Content.Persistence.QiniuKodo.Models
 {
-    public class OSSAccount
+    public class KodoAccount
     {
         public string AccessKeyId { get; set; }
 

@@ -13,25 +13,26 @@ using System.Text;
 using System.IO;
 using System.Runtime.Serialization;
 using Kooboo.Web.Script.Serialization;
+using System.Xml.Serialization;
 
-namespace Kooboo.CMS.Content.Persistence.Qiniu
+namespace Kooboo.CMS.Content.Persistence.QiniuKodo
 {
     [DataContract]
-    public class AliyunAccountSettings
+    public class QiniuAccountSettings
     {
-        [System.Xml.Serialization.XmlIgnore]
-        private static AliyunAccountSettings instance = null;
-        static AliyunAccountSettings()
+        [XmlIgnore]
+        private static QiniuAccountSettings instance = null;
+        static QiniuAccountSettings()
         {
             string settingFile = GetSettingFile();
             if (File.Exists(settingFile))
             {
                 var text = File.ReadAllText(settingFile);
-                instance = JsonHelper.Deserialize<AliyunAccountSettings>(text);
+                instance = JsonHelper.Deserialize<QiniuAccountSettings>(text);
             }
             else
             {
-                instance = new AliyunAccountSettings()
+                instance = new QiniuAccountSettings()
                 {
                     Endpoint = "http://oss-cn-shanghai.aliyuncs.com",
                     AccessKeyId = "Your Access Key Id Here",
@@ -53,7 +54,7 @@ namespace Kooboo.CMS.Content.Persistence.Qiniu
             }
         }
 
-        public static void Save(AliyunAccountSettings instance)
+        public static void Save(QiniuAccountSettings instance)
         {
             string settingFile = GetSettingFile();
             var json = JsonHelper.ToJSON(instance);
@@ -63,7 +64,7 @@ namespace Kooboo.CMS.Content.Persistence.Qiniu
         {
             return Path.Combine(Settings.BinDirectory, "QiniuSettings.json");
         }
-        public static AliyunAccountSettings Instance
+        public static QiniuAccountSettings Instance
         {
             get
             {

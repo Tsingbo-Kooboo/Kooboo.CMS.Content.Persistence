@@ -92,6 +92,8 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Caching" />
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Web" />
     <Reference Include="System.Web.Helpers, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.AspNet.WebPages.3.2.3\lib\net45\System.Web.Helpers.dll</HintPath>
@@ -125,18 +127,21 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Class1.cs" />
-    <Compile Include="Models\OSSAccount.cs" />
+    <Compile Include="Extensions\DateTimeExtensions.cs" />
+    <Compile Include="Extensions\MediaContentExtensions.cs" />
+    <Compile Include="Extensions\MediaFolderExtensions.cs" />
+    <Compile Include="MediaContentProvider.cs" />
+    <Compile Include="MediaFolderProvider.cs" />
+    <Compile Include="Models\KoobooMediaInfo.cs" />
+    <Compile Include="Models\QiniuAccountSettings.cs" />
+    <Compile Include="Models\KodoAccount.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="QueryExpressionTranslator.cs" />
     <Compile Include="Services\IAccountService.cs" />
-    <Compile Include="Services\IMediaFileService.cs" />
-    <Compile Include="Services\IMediaFolderService.cs" />
     <Compile Include="Utilities\CacheUtility.cs" />
     <Compile Include="Utilities\MediaPathUtility.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Extensions\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <None Include="app.config" />
     <None Include="packages.config" />
