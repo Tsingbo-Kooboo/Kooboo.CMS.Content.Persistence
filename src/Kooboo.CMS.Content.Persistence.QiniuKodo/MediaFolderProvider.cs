@@ -19,6 +19,8 @@ using System.Net;
 using Ionic.Zip;
 using Kooboo.Web.Url;
 using Kooboo.CMS.Content.Services;
+using Kooboo.CMS.Content.Persistence.QiniuKodo.Extensions;
+using System.Web;
 
 namespace Kooboo.CMS.Content.Persistence.QiniuKodo
 {
@@ -129,10 +131,28 @@ namespace Kooboo.CMS.Content.Persistence.QiniuKodo
         public void Remove(MediaFolder item)
         {
             var repository = item.Repository;
-            var list = GetList(repository);
-            if (list.Remove(item.FullName))
+            string bucket;
+            var manager = _accountService.GetBucketManager(repository.Name, out bucket);
+            var prefix = item.GetMediaKey();
+            var listFiles = manager.listFiles(bucket, prefix, "", 100, "/");
+            var batchOptions = listFiles
+                .Items
+                .Select(it =>
+                {
+                    var pure = $"{bucket}:{it.Key}";
+                    var bytes = Encoding.UTF8.GetBytes(pure);
+                    return $"/delete/{Convert.ToBase64String(bytes)}";
+                })
+                .ToArray();
+            var batchManager = _accountService.GetBucketManager(repository.Name, out bucket);
+            var result = batchManager.batch(batchOptions);
+            if (result.ResponseInfo.isOk())
             {
-                SaveList(repository, list);
+                var list = GetList(repository);
+                if (list.Remove(item.FullName))
+                {
+                    SaveList(repository, list);
+                }
             }
         }
 
@@ -180,26 +200,26 @@ namespace Kooboo.CMS.Content.Persistence.QiniuKodo
             zipFile.AddDirectoryByName(zipDir);
             var folderPrefix = UrlUtility.Combine(basePrefix, folderName).Trim('/') + "/";
             string bucket;
-            var client = _accountService.GetBucketManager(repository.Name, out bucket);
+            var rep = repository.Name;
+            var client = _accountService.GetBucketManager(rep, out bucket);
             var blobs = client.listFiles(bucket, folderPrefix, "", 100, "/");
-            var len = folderPrefix.Length;
+            var len = basePrefix.Length;
             foreach (var blob in blobs.Items)
             {
-                if (blob.Key.EndsWith("/"))
+                var key = blob.Key;
+                if (key.EndsWith("/"))
                 {
                     continue;
                 }
+
                 using (var stream = new MemoryStream())
                 {
-                    var k = blob.Key;
-                    //client.GetObject(new GetObjectRequest(bucket, blob.Key), stream);
-                    //stream.Position = 0;
-                    //var bytes = stream.ReadData();
-                    //if (bytes.Length > 0)
-                    //{
-                    //    var key = UrlUtility.Combine(zipDir, blob.Key.Substring(len));
-                    //    zipFile.AddEntry(key, bytes);
-                    //}
+                    var url = _accountService.AbsoluteUrl(key, rep);
+                    using (var wc = new WebClient())
+                    {
+                        var bytes = wc.DownloadData(url);
+                        zipFile.AddEntry(key.Substring(len), bytes);
+                    }
                 }
             }
         }
