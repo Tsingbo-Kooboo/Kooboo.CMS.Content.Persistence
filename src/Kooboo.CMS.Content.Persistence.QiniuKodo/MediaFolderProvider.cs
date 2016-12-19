@@ -58,8 +58,6 @@ namespace Kooboo.CMS.Content.Persistence.QiniuKodo
             return GetList(parent.Repository)
                 .Values
                 .Where(it => it.Parent != null && it.Parent == parent)
-                //.Select(it => it.AsActual())
-                //.Where(it => it != null)
                 .AsQueryable();
         }
 
