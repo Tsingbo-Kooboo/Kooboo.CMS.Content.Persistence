@@ -76,6 +76,9 @@ namespace Kooboo.CMS.Content.Persistence.QiniuKodo
                 Save(instance);
             }
         }
+        /// <summary>
+        /// 不使用cdn的url，没有缓存
+        /// </summary>
         [DataMember]
         public string Endpoint { get; set; }
         [DataMember]
@@ -87,7 +90,7 @@ namespace Kooboo.CMS.Content.Persistence.QiniuKodo
 
         private string domain;
         /// <summary>
-        /// 自定义域名
+        /// 自定义域名，cdn的url，有缓存
         /// </summary>
         [DataMember]
         public string CustomDomain

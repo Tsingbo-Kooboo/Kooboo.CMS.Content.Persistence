@@ -23,16 +23,31 @@ namespace Kooboo.CMS.Content.Persistence.QiniuKodo.Services
         Mac GetMac(string repository, out string bucket);
 
         BucketManager GetBucketManager(string repository, out string bucket);
-
-        UploadManager GetUploadManager(string repository, out string token);
+        /// <summary>
+        /// key不为空设置为指定url可以覆盖
+        /// </summary>
+        /// <param name="repository"></param>
+        /// <param name="token"></param>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        UploadManager GetUploadManager(string repository, out string token, string key = null);
         /// <summary>
         /// 外网可访问的地址
         /// </summary>
-        /// <param name="path">Kooboo管理的路径，比如 home/abc.jpg</param>
+        /// <param name="path">
+        /// Kooboo管理的路径，
+        /// 比如 home/abc.jpg，实际路径是 samplesite/media/home/abc.jpg
+        /// </param>
         /// <param name="repository"></param>
         /// <returns></returns>
         string ResolveUrl(string path, string repository);
 
+        /// <summary>
+        /// 不带缓存的地址
+        /// </summary>
+        /// <param name="key">云存储的key</param>
+        /// <param name="repository"></param>
+        /// <returns></returns>
         string AbsoluteUrl(string key, string repository);
     }
     [Dependency(typeof(IAccountService))]
@@ -41,7 +56,7 @@ namespace Kooboo.CMS.Content.Persistence.QiniuKodo.Services
         public string AbsoluteUrl(string key, string repository)
         {
             var account = Get(repository);
-            return UrlUtility.ToHttpAbsolute(account.CustomDomain, key);
+            return UrlUtility.ToHttpAbsolute(account.Endpoint, key);
         }
 
         public KodoAccount Get(string repository)
@@ -88,7 +103,7 @@ namespace Kooboo.CMS.Content.Persistence.QiniuKodo.Services
                 );
         }
 
-        public UploadManager GetUploadManager(string repository, out string token)
+        public UploadManager GetUploadManager(string repository, out string token, string key = null)
         {
             var account = Get(repository);
             string bucket;
@@ -96,7 +111,7 @@ namespace Kooboo.CMS.Content.Persistence.QiniuKodo.Services
             // 上传策略
             PutPolicy putPolicy = new PutPolicy
             {
-                Scope = bucket
+                Scope = string.IsNullOrEmpty(key) ? bucket : bucket + ":" + key
             };
             // 上传策略的过期时间(单位:秒)
             putPolicy.SetExpires(3600);
