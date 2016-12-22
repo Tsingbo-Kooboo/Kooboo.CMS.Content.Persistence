@@ -333,13 +333,7 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS
         #region IMediaContentProvider
         public void Add(MediaContent content, bool overrided)
         {
-            var key = content.GetMediaPath();
-            var metaData = new Dictionary<string, string>();
-            foreach (var item in content)
-            {
-                metaData[item.Key] = item.Value?.ToString();
-            }
-            _fileService.Create(key, content.Repository, content.ContentFile.Stream, metaData, overrided);
+            _fileService.Create(content, overrided);
         }
 
         public void Move(MediaFolder sourceFolder, string oldFileName, MediaFolder targetFolder, string newFileName)
@@ -377,7 +371,7 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS
 
         public void Update(MediaContent @new, MediaContent old)
         {
-            if (!@new.FileName.EqualsOrNullEmpty(old.FileName, StringComparison.OrdinalIgnoreCase))
+            if (!@new.FileName.EqualsOrNullEmpty(old.FileName, StringComparison.Ordinal))
             {
                 MoveContent(old, @new);
             }

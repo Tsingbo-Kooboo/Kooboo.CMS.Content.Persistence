@@ -31,7 +31,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Ionic.Zip.Reduced">
-      <HintPath>..\Kooboo.CMS.Content.Persistence.AliyunOSS\bin\Debug\Ionic.Zip.Reduced.dll</HintPath>
+      <HintPath>..\..\..\KoobooMvc5\Lib\DotNetZip\Ionic.Zip.Reduced.dll</HintPath>
     </Reference>
     <Reference Include="Kooboo, Version=4.5.0.1116, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Kooboo.Core.4.5.0.1116\lib\Kooboo.dll</HintPath>

@@ -10,24 +10,17 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Kooboo.CMS.Content.Models.Paths;
 using Kooboo.CMS.Content.Models;
-using System.Runtime.Serialization;
-using Kooboo.Runtime.Serialization;
 using Ionic.Zip;
 using Kooboo.CMS.Content.Services;
 using System.IO;
 using Kooboo.CMS.Common.Persistence.Non_Relational;
 using Kooboo.Web.Url;
-using Kooboo.CMS.Content.Caching;
-using Kooboo.CMS.Caching;
 using Kooboo.IO;
 using Aliyun.OSS;
 using Kooboo.CMS.Content.Persistence.AliyunOSS.Services;
 using Kooboo.CMS.Content.Persistence.AliyunOSS.Utilities;
-using Kooboo.CMS.Content.Persistence.AliyunOSS.Models;
 using Kooboo.CMS.Common.Runtime.Dependency;
-using Kooboo.Web.Script.Serialization;
 
 namespace Kooboo.CMS.Content.Persistence.AliyunOSS
 {

@@ -17,7 +17,7 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS.Services
 {
     public interface IMediaFileService
     {
-        void Create(string path, string repository, Stream stream, Dictionary<string, string> metadata, bool overwrite = true);
+        void Create(MediaContent content, bool @overwrite = true);
 
         MediaContent Get(string path, string repository);
 
@@ -39,26 +39,23 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS.Services
             _accountService = accountService;
         }
 
-        public void Create(string path,
-            string repository,
-            Stream stream,
-            Dictionary<string, string> metadata,
-            bool overwrite = true)
+        public void Create(MediaContent content, bool overwrite = true)
         {
+            var path = content.GetMediaPath();
+            var meta = new ObjectMetadata();
+            foreach (var item in content)
+            {
+                meta.UserMetadata[item.Key] = item.Value?.ToString();
+            }
+            var repository = content.Repository;
+            var stream = content.ContentFile.Stream;
             var folder = Path.GetDirectoryName(path);
             var fileName = Path.GetFileName(path);
             string bucketName;
             var client = _accountService.GetClient(repository, out bucketName);
             var key = MediaPathUtility.FilePath(path, repository);
-            var meta = new ObjectMetadata();
-            if (metadata != null)
-            {
-                foreach (var item in metadata)
-                {
-                    meta.UserMetadata[item.Key] = item.Value;
-                }
-            }
             var response = client.PutObject(bucketName, key, stream, meta);
+            content.VirtualPath = _accountService.ResolveUrl(path, repository);
             CacheUtility.RemoveCache("Get" + path, repository);
         }
 
