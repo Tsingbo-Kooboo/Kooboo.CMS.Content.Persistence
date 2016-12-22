@@ -11,21 +11,32 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Kooboo.CMS.Content.Models;
+using Kooboo.CMS.Content.Persistence.AliyunOSS.Services;
+using Kooboo.CMS.Common.Runtime;
 
 namespace Kooboo.CMS.Content.Persistence.AliyunOSS
 {
     public class RepositoryProvider : IRepositoryProvider
     {
-        public void Initialize(Models.Repository repository)
+        private readonly IRepositoryProvider inner;
+        private readonly IMediaFolderService _folderService;
+        public RepositoryProvider(
+            IRepositoryProvider innerProvider)
         {
-            inner.Initialize(repository);
-            MediaBlobHelper.InitializeRepositoryContainer(repository);
+            inner = innerProvider;
+            _folderService = EngineContext.Current.Resolve<IMediaFolderService>();
         }
 
-        public void Remove(Models.Repository item)
+        public void Initialize(Repository repository)
+        {
+            inner.Initialize(repository);
+            _folderService.Create("/", repository.Name);
+        }
+
+        public void Remove(Repository item)
         {
             inner.Remove(item);
-            MediaBlobHelper.DeleteRepositoryContainer(item);
+            _folderService.Delete("/", item.Name);
         }
 
         public bool TestDbConnection()
@@ -33,11 +44,6 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS
             return inner.TestDbConnection();
         }
 
-        private IRepositoryProvider inner;
-        public RepositoryProvider(IRepositoryProvider innerProvider)
-        {
-            inner = innerProvider;
-        }
         public IEnumerable<Repository> All()
         {
             return inner.All();
@@ -72,7 +78,7 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS
         {
             inner.Export(repository, outputStream);
         }
-    
+
         public Repository Get(Repository dummy)
         {
             return inner.Get(dummy);

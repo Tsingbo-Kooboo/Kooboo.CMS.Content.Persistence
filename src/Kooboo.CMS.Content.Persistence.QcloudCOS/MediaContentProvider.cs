@@ -21,6 +21,7 @@ using Kooboo.CMS.Content.Persistence.QcloudCOS.Services;
 using Kooboo.CMS.Content.Persistence.QcloudCOS.Extensions;
 using Kooboo.CMS.Content.Persistence.QcloudCOS.Utilities;
 using System.Net;
+using Kooboo.Web.Url;
 
 namespace Kooboo.CMS.Content.Persistence.QcloudCOS
 {
@@ -276,11 +277,9 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS
             var repository = content.GetRepository();
             if (content.ContentFile != null)
             {
-                content.FileName = content.ContentFile.FileName;
-                content.UserKey = content.FileName;
-                content.UUID = content.FileName;
-                var result = _fileService.Create(content.FileName, repository.Name, content.ContentFile.Stream, overrided);
-                content.VirtualPath = _accountService.ResourceUrl(repository.Name, result.data.source_url);
+                var path = UrlUtility.Combine(content.FolderName, content.ContentFile.FileName);
+                var result = _fileService.Create(path, repository.Name, content.ContentFile.Stream, overrided);
+                content = result.data.BlobToMediaContent(content, _accountService);
             }
         }
 

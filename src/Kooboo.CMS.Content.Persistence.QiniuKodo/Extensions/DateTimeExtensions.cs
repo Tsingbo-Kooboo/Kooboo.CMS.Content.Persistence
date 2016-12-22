@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Extensions
+namespace Kooboo.CMS.Content.Persistence.QiniuKodo.Extensions
 {
     public static class DateTimeExtensions
     {
@@ -12,17 +12,12 @@ namespace Kooboo.CMS.Content.Persistence.QcloudCOS.Extensions
         public static long ToUnixTime(this DateTime nowTime)
         {
             DateTime startTime = TimeZone.CurrentTimeZone.ToLocalTime(MinTime);
-            return (long)Math.Round((nowTime - startTime).TotalMilliseconds, MidpointRounding.AwayFromZero);
+            return (nowTime - startTime).Ticks;
         }
 
-        public static DateTime ToUtcTime(this string time)
+        public static DateTime ToUtcTime(this long time)
         {
-            long t;
-            if (long.TryParse(time, out t))
-            {
-                return MinTime.AddSeconds(t);
-            }
-            return MinTime;
+            return MinTime.AddTicks(time).ToUniversalTime();
         }
     }
 }
