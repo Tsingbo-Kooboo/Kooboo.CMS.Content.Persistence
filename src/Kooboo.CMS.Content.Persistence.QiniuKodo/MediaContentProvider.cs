@@ -51,6 +51,8 @@ namespace Kooboo.CMS.Content.Persistence.QiniuKodo
                 },
                 null);
             um.uploadStream(content.ContentFile.Stream, content.GetMediaKey(), token, options, null);
+            var path = content.GetMediaPath();
+            content.VirtualPath = _accountService.ResolveUrl(path, content.Repository);
         }
 
         public void Delete(MediaContent content)

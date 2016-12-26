@@ -16,5 +16,12 @@ namespace Kooboo.CMS.Content.Persistence.QiniuKodo.Extensions
             var path = UrlUtility.Combine(content.FolderName.Replace('~', '/'), content.FileName);
             return MediaPathUtility.FilePath(path, content.Repository);
         }
+
+        public static string GetMediaPath(this MediaContent mediaContent)
+        {
+            var pathList = mediaContent.FolderName.Split('~').ToList();
+            pathList.Add(mediaContent.FileName);
+            return UrlUtility.Combine(pathList.ToArray());
+        }
     }
 }
