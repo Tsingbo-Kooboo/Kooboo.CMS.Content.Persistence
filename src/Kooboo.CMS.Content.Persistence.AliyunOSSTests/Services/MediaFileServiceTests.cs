@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Kooboo.CMS.Common.Runtime;
 using System.IO;
 using Kooboo.CMS.Content.Persistence.AliyunOSS.Models;
+using Kooboo.CMS.Content.Models;
 
 namespace Kooboo.CMS.Content.Persistence.AliyunOSS.Services.Tests
 {
@@ -31,15 +32,19 @@ namespace Kooboo.CMS.Content.Persistence.AliyunOSS.Services.Tests
             // create
             var description = "Test Description";
             var fileName = $"home/{DateTime.Now.ToString("yyyyMMdd-hhmmss")}.jpg";
+
             using (var stream = TestHelper.GetStream("sago.jpg"))
             {
-                var mediaFile = _fileService.Create(fileName,
-                    RepositoryName,
-                    stream,
-                    new Dictionary<string, string>
+                var media = new MediaContent(RepositoryName, "home")
+                {
+                    ContentFile = new ContentFile
                     {
-                        [ConstValues.Metadata.Description] = description
-                    });
+                        FileName = fileName,
+                        Name = fileName,
+                        Stream = stream
+                    }
+                };
+                _fileService.Create(media);
             }
             // update
             //_fileService.Update(fileName, RepositoryName, new Dictionary<string, string>
