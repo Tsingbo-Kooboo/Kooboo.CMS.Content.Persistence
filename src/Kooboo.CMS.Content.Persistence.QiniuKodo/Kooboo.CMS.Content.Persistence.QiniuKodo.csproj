@@ -131,6 +131,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\CMSAssemblyInfoGlobal.cs">
+      <Link>CMSAssemblyInfoGlobal.cs</Link>
+    </Compile>
     <Compile Include="Extensions\DateTimeExtensions.cs" />
     <Compile Include="Extensions\MediaContentExtensions.cs" />
     <Compile Include="Extensions\MediaFolderExtensions.cs" />
@@ -151,6 +154,8 @@
   <ItemGroup>
     <None Include="app.config" />
     <None Include="packages.config" />
+    <None Include="QiniuSettings.json" />
+    <None Include="Readme.md" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

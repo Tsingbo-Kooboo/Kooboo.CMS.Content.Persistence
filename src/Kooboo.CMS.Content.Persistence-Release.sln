@@ -1,0 +1,39 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kooboo.CMS.Content.Persistence.AliyunOSS", "Kooboo.CMS.Content.Persistence.AliyunOSS\Kooboo.CMS.Content.Persistence.AliyunOSS.csproj", "{5651065F-09A0-4445-B97F-4F782F5B4172}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kooboo.CMS.Content.Persistence.QcloudCOS", "Kooboo.CMS.Content.Persistence.QcloudCOS\Kooboo.CMS.Content.Persistence.QcloudCOS.csproj", "{6D5D4D03-124F-4121-96E3-EF540B0A4602}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kooboo.CMS.Content.Persistence.QiniuKodo", "Kooboo.CMS.Content.Persistence.QiniuKodo\Kooboo.CMS.Content.Persistence.QiniuKodo.csproj", "{3C8FCA85-365F-4C08-9FDE-CC25D09572FC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0BF06585-B095-4FEF-93B7-AB38A1804799}"
+	ProjectSection(SolutionItems) = preProject
+		Nuget.config = Nuget.config
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5651065F-09A0-4445-B97F-4F782F5B4172}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5651065F-09A0-4445-B97F-4F782F5B4172}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5651065F-09A0-4445-B97F-4F782F5B4172}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5651065F-09A0-4445-B97F-4F782F5B4172}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6D5D4D03-124F-4121-96E3-EF540B0A4602}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6D5D4D03-124F-4121-96E3-EF540B0A4602}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6D5D4D03-124F-4121-96E3-EF540B0A4602}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6D5D4D03-124F-4121-96E3-EF540B0A4602}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3C8FCA85-365F-4C08-9FDE-CC25D09572FC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3C8FCA85-365F-4C08-9FDE-CC25D09572FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3C8FCA85-365F-4C08-9FDE-CC25D09572FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3C8FCA85-365F-4C08-9FDE-CC25D09572FC}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

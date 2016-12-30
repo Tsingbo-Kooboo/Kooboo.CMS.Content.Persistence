@@ -124,6 +124,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\CMSAssemblyInfoGlobal.cs">
+      <Link>CMSAssemblyInfoGlobal.cs</Link>
+    </Compile>
     <Compile Include="Controllers\QcloudResourceController.cs" />
     <Compile Include="DependencyRegistrar.cs" />
     <Compile Include="Extensions\DateTimeExtensions.cs" />

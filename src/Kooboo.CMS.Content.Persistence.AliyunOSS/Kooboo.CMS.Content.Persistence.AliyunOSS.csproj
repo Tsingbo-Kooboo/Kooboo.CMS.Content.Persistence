@@ -127,6 +127,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\CMSAssemblyInfoGlobal.cs">
+      <Link>CMSAssemblyInfoGlobal.cs</Link>
+    </Compile>
     <Compile Include="Extensions\MediaContentExtensions.cs" />
     <Compile Include="Extensions\MediaFolderExtensions.cs" />
     <Compile Include="Extensions\OssClientExtensions.cs" />
@@ -152,9 +155,10 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Ionic.Zip.xml" />
-    <Content Include="Readme.txt" />
+    <None Include="Readme.md" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="AliyunOSSSettings.json" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup />

@@ -1,0 +1,9 @@
+﻿{
+  "Endpoint": "http://oss-cn-shanghai.aliyuncs.com",
+  "AccessKeyId": "LTAIW19FvrsLPnPk",
+  "AccessKeySecret": "4aMAJ6EQLDS6wuSkMQAx9fppYs4F1F",
+  "BucketName": "longrich",
+  "CustomDomain": "http://sample.kooboo.me",
+  "RepositoryBuckets": [
+  ]
+}

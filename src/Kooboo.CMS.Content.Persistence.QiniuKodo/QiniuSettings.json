@@ -1,0 +1,15 @@
+﻿{
+  "Endpoint": "http://alpzjx.qingbo.me",
+  "AccessKeyId": "4A0j8xiftn8BLIS6HsPBWN04CeSPDt1uRSjdvmTf",
+  "AccessKeySecret": "VXB-9J6fxDt0U9KkAyNUygw2RHP350cgrAAwNCMI",
+  "BucketName": "kooboo",
+  "CustomDomain": "http://alpzjx.qingbo.me",
+  "RepositoryBuckets": [
+    {
+      "Endpoint": "http://alpzjx.qingbo.me",
+      "RepositoryName": "alpzjx",
+      "BucketName": "alpzjx",
+      "CustomDomain": "http://alpzjx.qingbo.me"
+    }
+  ]
+}
